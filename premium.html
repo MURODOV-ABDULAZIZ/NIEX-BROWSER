@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Niex Premium</title>
+<style>
+:root{
+  --bg:#080B14; --bg2:#0E1424; --card:rgba(20,28,46,.72); --line:rgba(255,255,255,.08);
+  --txt:#EAF0FB; --mut:#8A97B4; --dim:#5A678A;
+  --gold1:#FFD98A; --gold2:#F5A623; --green1:#00E5A0; --green2:#00C885; --red:#FF5A6E;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;overflow-x:hidden;position:relative}
+/* Floating background orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.35;z-index:0;pointer-events:none;animation:float 14s ease-in-out infinite}
+.orb.a{width:420px;height:420px;background:radial-gradient(circle,#F5A623,transparent 70%);top:-120px;right:-80px}
+.orb.b{width:380px;height:380px;background:radial-gradient(circle,#00E5A0,transparent 70%);top:40%;left:-140px;animation-delay:-5s}
+.orb.c{width:340px;height:340px;background:radial-gradient(circle,#6E7BFF,transparent 70%);bottom:-100px;right:20%;animation-delay:-9s}
+@keyframes float{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-28px) translateX(16px)}}
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 24px 100px}
+.reveal{opacity:0;transform:translateY(22px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}
+
+/* Top bar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;backdrop-filter:blur(14px);background:rgba(8,11,20,.6);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;letter-spacing:.2px}
+.brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--gold1),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 14px rgba(245,166,35,.4)}
+.back{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.back:hover{background:rgba(255,255,255,.12)}
+
+/* Hero */
+.hero{text-align:center;padding:72px 0 40px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.3);color:var(--gold1);border-radius:999px;padding:7px 15px;font-size:12px;font-weight:700;letter-spacing:.4px;margin-bottom:24px}
+.chip .pulse{width:7px;height:7px;border-radius:50%;background:var(--gold2);animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(34px,6vw,62px);font-weight:850;line-height:1.05;letter-spacing:-1.5px;text-wrap:balance;margin-bottom:18px}
+.hero h1 .grad{background:linear-gradient(120deg,var(--gold1),var(--gold2) 60%,#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:clamp(15px,2.2vw,19px);color:var(--mut);max-width:560px;margin:0 auto 32px;text-wrap:balance}
+.cta{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#2a1a00;border:none;border-radius:14px;padding:16px 34px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 10px 34px rgba(245,166,35,.4);transition:all .2s}
+.cta:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(245,166,35,.55)}
+.cta:active{transform:scale(.97)}
+
+.section{margin-top:80px}
+.sec-head{text-align:center;margin-bottom:40px}
+.sec-head .eyebrow{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);margin-bottom:12px}
+.sec-head h2{font-size:clamp(26px,4vw,40px);font-weight:820;letter-spacing:-.8px;text-wrap:balance}
+.sec-head p{color:var(--mut);margin-top:12px;max-width:520px;margin-left:auto;margin-right:auto}
+
+/* Pricing cards */
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:820px;margin:0 auto}
+@media(max-width:720px){.plans{grid-template-columns:1fr}}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:32px 28px;backdrop-filter:blur(16px);position:relative;transition:transform .25s,box-shadow .25s}
+.plan:hover{transform:translateY(-6px)}
+.plan.pro{border-color:rgba(245,166,35,.4);box-shadow:0 20px 60px rgba(245,166,35,.14)}
+.plan.pro::before{content:"TAVSIYA ETILADI";position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#2a1a00;font-size:10px;font-weight:800;letter-spacing:1px;padding:5px 14px;border-radius:999px;white-space:nowrap}
+.plan .pname{font-size:14px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mut)}
+.plan.pro .pname{color:var(--gold1)}
+.plan .price{font-size:40px;font-weight:850;letter-spacing:-1px;margin:14px 0 4px}
+.plan .price small{font-size:15px;font-weight:600;color:var(--dim)}
+.plan .pdesc{color:var(--mut);font-size:13px;margin-bottom:22px}
+.feat{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:14px;border-top:1px solid rgba(255,255,255,.05)}
+.feat .ic{width:20px;height:20px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:1px}
+.feat .yes{background:rgba(0,229,160,.15);color:var(--green1)}
+.feat .no{background:rgba(255,90,110,.12);color:var(--red)}
+.feat .lock{background:rgba(245,166,35,.14);color:var(--gold2)}
+.feat.off{color:var(--dim)}
+.plan .pbtn{width:100%;margin-top:22px;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s}
+.plan .pbtn.free{background:rgba(255,255,255,.06);color:var(--mut);cursor:default}
+.plan .pbtn.go{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#2a1a00;box-shadow:0 8px 24px rgba(245,166,35,.35)}
+.plan .pbtn.go:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(245,166,35,.5)}
+
+/* Focus mode */
+.focus-hero{background:linear-gradient(135deg,rgba(110,123,255,.1),rgba(0,229,160,.06));border:1px solid var(--line);border-radius:24px;padding:44px 36px;backdrop-filter:blur(16px);text-align:center;position:relative;overflow:hidden}
+.focus-hero .big{font-size:56px;margin-bottom:14px}
+.focus-hero h3{font-size:28px;font-weight:820;letter-spacing:-.6px;margin-bottom:10px}
+.focus-hero p{color:var(--mut);max-width:520px;margin:0 auto 8px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:32px}
+.fitem{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;align-items:center;gap:11px;font-size:13px;font-weight:600;transition:all .18s}
+.fitem:hover{transform:translateY(-3px);border-color:rgba(0,229,160,.3)}
+.fitem .fic{font-size:19px}
+.fitem .soon{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--gold2);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.25);padding:3px 7px;border-radius:6px;white-space:nowrap}
+
+/* Payment */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;margin:0 auto}
+@media(max-width:760px){.pay-grid{grid-template-columns:1fr}}
+.bankcard{background:linear-gradient(135deg,#1a2338,#0f1626);border:1px solid rgba(245,166,35,.25);border-radius:20px;padding:28px;position:relative;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.4)}
+.bankcard::after{content:"";position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(245,166,35,.25),transparent 70%)}
+.bankcard .bhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;position:relative}
+.bankcard .bname{font-size:13px;color:var(--gold1);font-weight:800;letter-spacing:1px}
+.bankcard .chipimg{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#e8c884,#b8923f)}
+.bankcard .cnum{font-size:23px;font-weight:700;letter-spacing:3px;font-variant-numeric:tabular-nums;margin-bottom:20px;display:flex;align-items:center;gap:12px;position:relative}
+.bankcard .copy{background:rgba(255,255,255,.1);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;transition:all .15s}
+.bankcard .copy:hover{background:rgba(0,229,160,.2);color:var(--green1)}
+.bankcard .brow{display:flex;justify-content:space-between;position:relative}
+.bankcard .lbl{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.bankcard .val{font-size:14px;font-weight:700}
+.pay-info{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;backdrop-filter:blur(16px)}
+.pay-info h4{font-size:18px;font-weight:800;margin-bottom:14px}
+.step{display:flex;gap:12px;margin-bottom:16px}
+.step .num{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:rgba(245,166,35,.15);color:var(--gold1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.step .stx{font-size:13px;color:var(--mut)}
+.paid-btn{width:100%;margin-top:10px;background:linear-gradient(135deg,var(--green1),var(--green2));color:#053225;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s}
+.paid-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,229,160,.4)}
+
+/* Form */
+.form-card{max-width:640px;margin:32px auto 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px;backdrop-filter:blur(16px);display:none}
+.form-card.show{display:block;animation:rise .5s ease forwards}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:560px){.frow{grid-template-columns:1fr}}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:6px}
+.field input,.field textarea{width:100%;background:rgba(8,11,20,.6);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--txt);font-size:14px;font-family:inherit;transition:border-color .15s}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--gold2);box-shadow:0 0 0 2px rgba(245,166,35,.12)}
+.field input.err{border-color:var(--red)}
+.field textarea{resize:vertical;min-height:64px}
+.upload{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:16px}
+.upload:hover{border-color:var(--gold2);background:rgba(245,166,35,.04)}
+.upload .uic{font-size:28px;margin-bottom:6px}
+.upload .utx{font-size:13px;color:var(--mut)}
+.upload.has{border-color:var(--green1);border-style:solid}
+.preview{max-width:100%;max-height:220px;border-radius:10px;margin-top:12px;display:none}
+.submit-btn{width:100%;background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#2a1a00;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;margin-top:6px}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(245,166,35,.4)}
+.submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.form-msg{margin-top:14px;font-size:13px;text-align:center;min-height:18px}
+.form-msg.err{color:var(--red)}.form-msg.ok{color:var(--green1)}
+
+/* States: pending / pro dashboard */
+.state-card{max-width:640px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:44px 36px;text-align:center;backdrop-filter:blur(16px)}
+.state-card .sic{font-size:56px;margin-bottom:16px}
+.state-card h3{font-size:24px;font-weight:820;margin-bottom:10px}
+.state-card p{color:var(--mut);max-width:420px;margin:0 auto}
+.badge-pro{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--green1),var(--green2));color:#053225;font-weight:800;padding:8px 18px;border-radius:999px;font-size:14px;margin-bottom:20px}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:26px;text-align:left}
+.dstat{background:rgba(8,11,20,.5);border:1px solid var(--line);border-radius:14px;padding:16px}
+.dstat .dlbl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.dstat .dval{font-size:22px;font-weight:820}
+.dstat .dval.green{color:var(--green1)}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:#111a2c;border:1px solid var(--line);color:var(--txt);padding:12px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:all .3s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.foot{text-align:center;color:var(--dim);font-size:12px;margin-top:70px}
+</style>
+</head>
+<body>
+<div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+
+<div class="topbar">
+  <div class="brand"><div class="logo" style="background:transparent;padding:0"><img src="assets/brand/niex-logo.png" alt="NIEX" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none'"></div> Niex <span style="color:var(--gold1)">Premium</span></div>
+  <button class="back" id="back-btn">← Orqaga</button>
+</div>
+
+<div class="wrap">
+
+  <!-- PRO DASHBOARD (agar allaqachon Pro) -->
+  <div id="pro-dashboard" class="section hidden">
+    <div class="state-card reveal d1">
+      <div class="badge-pro">👑 Pro Faol</div>
+      <h3>Siz Premium foydalanuvchisiz</h3>
+      <p>Barcha AI himoya va samaradorlik imkoniyatlari cheksiz ochilgan.</p>
+      <div class="dash-grid">
+        <div class="dstat"><div class="dlbl">Reja</div><div class="dval green">Pro</div></div>
+        <div class="dstat"><div class="dlbl">Qolgan kunlar</div><div class="dval" id="d-days">—</div></div>
+        <div class="dstat"><div class="dlbl">Faollashgan</div><div class="dval" id="d-act" style="font-size:15px">—</div></div>
+        <div class="dstat"><div class="dlbl">Tugash sanasi</div><div class="dval" id="d-exp" style="font-size:15px">—</div></div>
+        <div class="dstat"><div class="dlbl">Rasm tahlili</div><div class="dval green">∞</div></div>
+        <div class="dstat"><div class="dlbl">Video tahlili</div><div class="dval green">∞</div></div>
+      </div>
+      <button id="cancel-btn" style="margin-top:26px;background:transparent;border:1px solid rgba(255,90,110,.35);color:#FF8A98;border-radius:12px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s">Obunani bekor qilish</button>
+    </div>
+  </div>
+
+  <!-- ASOSIY (Free foydalanuvchi) -->
+  <div id="upgrade-view">
+    <!-- HERO -->
+    <div class="hero">
+      <div class="chip reveal d1"><span class="pulse"></span> NIEX PREMIUM</div>
+      <h1 class="reveal d2">Xavfsizlikni <span class="grad">keyingi bosqichga</span> olib chiqing</h1>
+      <p class="reveal d3">Cheksiz AI himoya, cheksiz video tahlil va diqqatni jamlaydigan Focus Mode — hammasi bitta obunada.</p>
+      <button class="cta reveal d4" id="hero-cta">👑 Pro'ga o'tish — <span id="hero-price">7 999</span> so'm/oy</button>
+    </div>
+
+    <!-- FREE vs PRO -->
+    <div class="section">
+      <div class="sec-head reveal">
+        <div class="eyebrow">Rejalar</div>
+        <h2>O'zingizga mos rejani tanlang</h2>
+      </div>
+      <div class="plans">
+        <div class="plan reveal d1">
+          <div class="pname">Free</div>
+          <div class="price">0 <small>so'm</small></div>
+          <div class="pdesc">Kundalik xavfsiz brauzing</div>
+          <div class="feat"><span class="ic yes">✓</span> Cheksiz rasm/sayt tahlili (local AI)</div>
+          <div class="feat"><span class="ic yes">✓</span> 60 daqiqa video tahlili / kun</div>
+          <div class="feat"><span class="ic yes">✓</span> Standart AI himoya</div>
+          <div class="feat"><span class="ic yes">✓</span> Jamoa yordami</div>
+          <div class="feat off"><span class="ic no">✕</span> Focus Mode</div>
+          <div class="feat off"><span class="ic no">✕</span> Tezkor AI qayta ishlash</div>
+          <button class="pbtn free">Joriy reja</button>
+        </div>
+        <div class="plan pro reveal d2">
+          <div class="pname">Pro</div>
+          <div class="price"><span id="plan-price">7 999</span> <small>so'm/oy</small></div>
+          <div class="pdesc">Cheksiz AI va Focus Mode</div>
+          <div class="feat"><span class="ic yes">✓</span> <b>Cheksiz</b> rasm tahlili</div>
+          <div class="feat"><span class="ic yes">✓</span> <b>Cheksiz</b> video tahlil</div>
+          <div class="feat"><span class="ic yes">✓</span> Kuchaytirilgan AI himoya</div>
+          <div class="feat"><span class="ic yes">✓</span> AI Priority yangilanishlar</div>
+          <div class="feat"><span class="ic yes">✓</span> Erta kirish imkoniyatlari</div>
+          <div class="feat"><span class="ic yes">✓</span> Premium yordam</div>
+          <div class="feat"><span class="ic lock">👑</span> <b>Focus Mode</b></div>
+          <button class="pbtn go" id="plan-cta">Pro'ga o'tish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOCUS MODE -->
+    <div class="section">
+      <div class="focus-hero reveal">
+        <div class="big">🎯</div>
+        <h3>Focus Mode</h3>
+        <p>Chalg'ituvchi saytlar va ilovalarni bloklab, ishga to'liq jamlanib ishlang. Bu — Premium'ning eng kuchli imkoniyati.</p>
+        <div style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:800;color:var(--gold1);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.25);padding:6px 14px;border-radius:999px">👑 Faqat Pro</div>
+        <div class="fgrid">
+          <div class="fitem"><span class="fic">🚫</span> Saytlarni bloklash</div>
+          <div class="fitem"><span class="fic">📱</span> Ilovalarni bloklash</div>
+          <div class="fitem"><span class="fic">⏰</span> Sessiyalarni rejalash</div>
+          <div class="fitem"><span class="fic">⏳</span> Maxsus davomiylik</div>
+          <div class="fitem"><span class="fic">📊</span> Kunlik statistika</div>
+          <div class="fitem"><span class="fic">📈</span> Haftalik statistika</div>
+          <div class="fitem"><span class="fic">🗓️</span> Oylik statistika</div>
+          <div class="fitem"><span class="fic">🕑</span> Sessiya tarixi</div>
+          <div class="fitem"><span class="fic">🏆</span> Focus streak</div>
+          <div class="fitem"><span class="fic">⭐</span> Samaradorlik ball</div>
+          <div class="fitem"><span class="fic">☕</span> Tanaffus taymeri</div>
+          <div class="fitem"><span class="fic">📝</span> Maxsus bloklash ro'yxati</div>
+          <div class="fitem"><span class="fic">🤖</span> AI chalg'ish aniqlash <span class="soon">TEZ ORADA</span></div>
+          <div class="fitem"><span class="fic">💡</span> AI ishga qaytarish <span class="soon">TEZ ORADA</span></div>
+          <div class="fitem"><span class="fic">📉</span> Samaradorlik dashboard <span class="soon">TEZ ORADA</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="section" id="payment">
+      <div class="sec-head reveal">
+        <div class="eyebrow">To'lov</div>
+        <h2>Pro'ni faollashtiring</h2>
+        <p>Quyidagi kartaga to'lovni amalga oshiring va tasdiqlash uchun ariza yuboring.</p>
+      </div>
+      <div class="pay-grid">
+        <div class="bankcard reveal d1">
+          <div class="bhead"><div class="bname" id="bank-name">BANK</div><div class="chipimg"></div></div>
+          <div class="cnum"><span id="card-num">0000 0000 0000 0000</span><button class="copy" id="copy-card">📋 Nusxa</button></div>
+          <div class="brow">
+            <div><div class="lbl">Karta egasi</div><div class="val" id="card-holder">—</div></div>
+            <div style="text-align:right"><div class="lbl">Summa</div><div class="val" id="card-amount">7 999 so'm</div></div>
+          </div>
+        </div>
+        <div class="pay-info reveal d2">
+          <h4>Qanday to'lash kerak?</h4>
+          <div class="step"><div class="num">1</div><div class="stx">Yuqoridagi karta raqamiga <b id="pi-amount">7 999</b> so'm o'tkazing.</div></div>
+          <div class="step"><div class="num">2</div><div class="stx">To'lov chekini (skrinshot) saqlang.</div></div>
+          <div class="step"><div class="num">3</div><div class="stx">"To'ladim" tugmasini bosib, arizani to'ldiring.</div></div>
+          <div class="step"><div class="num">4</div><div class="stx">Biz tekshiramiz va Pro darhol faollashadi.</div></div>
+          <button class="paid-btn" id="ipaid-btn">✅ To'ladim</button>
+        </div>
+      </div>
+
+      <!-- PAYMENT FORM -->
+      <div class="form-card" id="pay-form">
+        <div class="frow">
+          <div class="field"><label>To'liq ism *</label><input id="f-name" placeholder="Ism Familiya"></div>
+          <div class="field"><label>Email *</label><input id="f-email" type="email" placeholder="siz@email.com"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Telefon (ixtiyoriy)</label><input id="f-phone" placeholder="+998 90 000 00 00"></div>
+          <div class="field"><label>To'lov summasi *</label><input id="f-amount" type="number" placeholder="7999"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>To'lov sanasi *</label><input id="f-date" type="date"></div>
+          <div class="field"><label>To'lov vaqti *</label><input id="f-time" type="time"></div>
+        </div>
+        <div class="upload" id="upload-box">
+          <div class="uic">📸</div>
+          <div class="utx" id="upload-txt">To'lov chekini yuklang (skrinshot) *</div>
+          <img class="preview" id="preview">
+        </div>
+        <input type="file" id="f-file" accept="image/*" style="display:none">
+        <div class="field" style="margin-bottom:16px"><label>Xabar (ixtiyoriy)</label><textarea id="f-msg" placeholder="Qo'shimcha izoh..."></textarea></div>
+        <button class="submit-btn" id="submit-btn">Arizani yuborish</button>
+        <div class="form-msg" id="form-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENDING STATE -->
+  <div id="pending-view" class="section hidden">
+    <div class="state-card reveal d1">
+      <div class="sic">⏳</div>
+      <h3>To'lovingiz tekshirilmoqda</h3>
+      <p>Arizangiz qabul qilindi. Tez orada tasdiqlaymiz va Pro avtomatik faollashadi. Bildirishnoma orqali xabar beramiz.</p>
+      <button id="cancel-pending-btn" style="margin-top:18px;background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">So'rovni bekor qilish</button>
+    </div>
+  </div>
+
+  <!-- FOYDALANUVCHI USAGE — kunlik NIEX product limitlari (provider stats emas) -->
+  <div class="section" id="ai-limits-sec">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Bugungi ishlatish</div>
+      <h2>Sizning kunlik limitingiz</h2>
+      <p>Niex AI himoyasi qanchani ishlatgani. Limit har kuni UTC 00:00 da yangilanadi.</p>
+    </div>
+    <div style="max-width:820px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:8px;backdrop-filter:blur(16px)">
+      <div id="ai-limits-body" style="padding:16px;color:var(--mut);font-size:14px">Yuklanmoqda…</div>
+    </div>
+  </div>
+
+  <div class="foot">Niex Ecosystem · Xavfsiz AI Brauzer</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const P = window.safenet_premium;
+let fileB64 = '';
+let _loggedIn = false;
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function fmt(n){ return (Number(n)||0).toLocaleString('ru-RU'); }
+function show(id){ document.getElementById(id).classList.remove('hidden'); }
+function hide(id){ document.getElementById(id).classList.add('hidden'); }
+
+document.getElementById('back-btn').addEventListener('click', ()=> P ? P.goHome() : history.back());
+
+// Obunani bekor qilish
+document.getElementById('cancel-btn').addEventListener('click', async ()=>{
+  if(!P || !confirm('Pro obunani bekor qilmoqchimisiz? Free rejaga qaytasiz.')) return;
+  try{ await P.cancel(); toast('Obuna bekor qilindi'); const st = await P.getStatus(); render(st); }
+  catch{ toast('Xatolik yuz berdi'); }
+});
+document.getElementById('hero-cta').addEventListener('click', ()=> document.getElementById('payment').scrollIntoView());
+document.getElementById('plan-cta').addEventListener('click', ()=> document.getElementById('payment').scrollIntoView());
+
+// Bank card copy
+document.getElementById('copy-card').addEventListener('click', ()=>{
+  const num = document.getElementById('card-num').textContent.replace(/\s/g,'');
+  navigator.clipboard.writeText(num).then(()=>toast('📋 Karta raqami nusxalandi')).catch(()=>toast('Nusxalab bo\'lmadi'));
+});
+
+// I Paid → show form
+document.getElementById('ipaid-btn').addEventListener('click', ()=>{
+  document.getElementById('pay-form').classList.add('show');
+  document.getElementById('pay-form').scrollIntoView({behavior:'smooth'});
+});
+
+// File upload
+const uploadBox = document.getElementById('upload-box');
+const fileInput = document.getElementById('f-file');
+uploadBox.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 8*1024*1024){ toast('Rasm juda katta (max 8MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    fileB64 = reader.result;
+    const prev = document.getElementById('preview');
+    prev.src = fileB64; prev.style.display='block';
+    uploadBox.classList.add('has');
+    document.getElementById('upload-txt').textContent = '✓ Chek yuklandi: ' + file.name;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Submit
+document.getElementById('submit-btn').addEventListener('click', async ()=>{
+  const msg = document.getElementById('form-msg');
+  msg.className='form-msg';
+  const name=document.getElementById('f-name').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const amount=document.getElementById('f-amount').value.trim();
+  const date=document.getElementById('f-date').value;
+  const time=document.getElementById('f-time').value;
+  // Validatsiya
+  let bad=false;
+  [['f-name',name],['f-email',email],['f-amount',amount],['f-date',date],['f-time',time]].forEach(([id,v])=>{
+    const el=document.getElementById(id); if(!v){el.classList.add('err');bad=true;} else el.classList.remove('err');
+  });
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ document.getElementById('f-email').classList.add('err'); bad=true; }
+  if(!fileB64){ uploadBox.style.borderColor='var(--red)'; bad=true; }
+  if(bad){ msg.classList.add('err'); msg.textContent='Iltimos barcha majburiy maydonlarni to\'ldiring.'; return; }
+  if(!_loggedIn){ msg.classList.add('err'); msg.textContent='Pro obuna hisobga bog\'lanadi — avval brauzerda hisobingizga kiring.'; return; }
+
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Yuborilmoqda...';
+  try{
+    const res = await P.submitPayment({
+      name, email, phone:document.getElementById('f-phone').value.trim(),
+      amount, txnDate:date, txnTime:time,
+      message:document.getElementById('f-msg').value.trim(), screenshot:fileB64,
+    });
+    if(res && res.ok){
+      hide('upgrade-view'); show('pending-view');
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+      msg.classList.add('err'); msg.textContent = (res && res.error) || 'Xatolik yuz berdi.';
+      btn.disabled=false; btn.textContent='Arizani yuborish';
+    }
+  }catch(e){
+    msg.classList.add('err'); msg.textContent='Ulanish xatosi.'; btn.disabled=false; btn.textContent='Arizani yuborish';
+  }
+});
+
+// Render status
+function render(st){
+  if(!st) return;
+  _loggedIn = !!st.loggedIn;
+  // Bank card
+  if(st.card){
+    document.getElementById('card-num').textContent = st.card.cardNumber;
+    document.getElementById('card-holder').textContent = st.card.cardHolder;
+    document.getElementById('bank-name').textContent = st.card.bankName;
+    document.getElementById('card-amount').textContent = fmt(st.card.price)+' so\'m';
+    document.getElementById('pi-amount').textContent = fmt(st.card.price);
+    document.getElementById('hero-price').textContent = fmt(st.card.price);
+    document.getElementById('plan-price').textContent = fmt(st.card.price);
+    document.getElementById('f-amount').value = st.card.price;
+  }
+  if(st.profile && st.profile.email){ document.getElementById('f-email').value = st.profile.email; }
+  if(st.profile && (st.profile.name||st.profile.n)){ document.getElementById('f-name').value = st.profile.name||st.profile.n; }
+
+  if(st.isPro){
+    hide('upgrade-view'); hide('pending-view'); show('pro-dashboard');
+    document.getElementById('d-days').textContent = st.daysRemaining!=null ? st.daysRemaining : '∞';
+    document.getElementById('d-act').textContent = st.activatedAt ? st.activatedAt.slice(0,10) : '—';
+    document.getElementById('d-exp').textContent = st.expiresAt ? st.expiresAt.slice(0,10) : '—';
+  } else if(st.pendingRequest){
+    hide('upgrade-view'); hide('pro-dashboard'); show('pending-view');
+  } else {
+    show('upgrade-view'); hide('pending-view'); hide('pro-dashboard');
+  }
+}
+
+// Bugungi sana/vaqtni oldindan to'ldirish
+(function(){
+  const now=new Date();
+  document.getElementById('f-date').value = now.toISOString().slice(0,10);
+  document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+})();
+
+// USER daily usage — Claude/GPT uslubida shaxsiy kunlik limit
+function _fmtRow(label, valueLine, pct, color, subline){
+  const bar = pct === null ? '' : `
+    <div style="margin-top:9px;height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden">
+      <div style="height:100%;width:${Math.max(0,Math.min(100,pct))}%;background:linear-gradient(90deg,${color},${color});transition:width .4s"></div>
+    </div>`;
+  return `
+    <div style="padding:14px 16px;border-top:1px solid rgba(255,255,255,.05)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${color};box-shadow:0 0 8px ${color}"></span>
+          <b style="font-size:14px">${label}</b>
+        </div>
+        <div style="font-size:13px;color:var(--txt);font-variant-numeric:tabular-nums;font-weight:700">${valueLine}</div>
+      </div>
+      ${subline ? `<div style="margin-top:4px;font-size:11px;color:var(--dim)">${subline}</div>` : ''}
+      ${bar}
+    </div>`;
+}
+
+function _fmtCountdown(ms){
+  if(!ms || ms<=0) return 'yangilanmoqda';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if(h >= 1) return `${h} soat ${m} daqiqa`;
+  return `${m} daqiqa`;
+}
+
+// Kunlik NIEX product limitlari — plan bo'yicha 5 ta counter + Local AI.
+// MUHIM: bu tashqi API provider (OpenAI/Gemini/Groq) statistikasi EMAS.
+//   Provider stats — faqat Admin Dashboard'da.
+const OP_META = {
+  videoMinutes: { icon: '🎬', label: 'Cloud video AI',  unit: ' daqiqa', desc: 'Video kontent AI tahlili' },
+  image:        { icon: '🖼️', label: 'Cloud image AI',  unit: '',        desc: 'Rasm noaniq bo\'lganda cloud tekshiruvi' },
+  deepScan:     { icon: '🔍', label: 'Deep semantic scan', unit: '',    desc: 'Chuqur kontekst tahlili' },
+  ocr:          { icon: '📝', label: 'OCR (rasm→matn)', unit: '',        desc: 'Rasmdan matn olish' },
+  pdf:          { icon: '📄', label: 'PDF analiz',       unit: '',        desc: 'Hujjat kontenti tahlili' },
+};
+
+async function renderAiLimits(){
+  const box = document.getElementById('ai-limits-body');
+  if(!box || !P || !P.getAiLimits) return;
+  try{
+    const r = await P.getAiLimits();
+    if(!r || !r.ok){ box.textContent = 'Limit holatini olish imkoni bo\'lmadi.'; return; }
+    const isPro = !!r.isPro;
+    const planName = r.planName || (isPro ? 'Pro' : 'Free');
+    const operations = Array.isArray(r.operations) ? r.operations : [];
+    const resetIn = _fmtCountdown(r.msUntilReset || r.msRemaining);
+
+    const header = `
+      <div style="padding:14px 16px 6px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:800;color:${isPro?'var(--green1)':'var(--gold1)'};background:${isPro?'rgba(0,229,160,.12)':'rgba(245,166,35,.12)'};border:1px solid ${isPro?'rgba(0,229,160,.28)':'rgba(245,166,35,.28)'};padding:4px 12px;border-radius:999px">${isPro?'👑 Pro':'Free'} Plan</span>
+          <span style="font-size:12px;color:var(--dim)">Kunlik limitlar — ${resetIn}dan so'ng yangilanadi</span>
+        </div>
+      </div>`;
+
+    // Har 5 ta cloud AI operatsiya uchun qator
+    let cloudRows = '';
+    for (const op of operations) {
+      const meta = OP_META[op.op] || { icon: '⚙️', label: op.op, unit: '', desc: '' };
+      let line, pct, color, sub;
+      if (op.unlimited) {
+        line = 'Cheksiz';
+        pct = null;
+        color = 'var(--green1)';
+        sub = `${meta.desc} — ${planName} tarifida cheksiz`;
+      } else {
+        line = `${op.used} / ${op.limit}${meta.unit}`;
+        pct = op.percent;
+        color = pct >= 100 ? 'var(--red)' : (pct >= 80 ? 'var(--gold1)' : 'var(--green1)');
+        sub = op.exhausted
+          ? `Bugungi kvota tugadi — ${resetIn}dan so'ng ${op.limit}${meta.unit} qayta beriladi`
+          : `${op.remaining}${meta.unit} qoldi · ${meta.desc}`;
+      }
+      cloudRows += _fmtRow(`${meta.icon} ${meta.label}`, line, pct, color, sub);
+    }
+
+    // Local AI — CHEKSIZ (barcha planlarda). Alohida bo'lim.
+    const localSection = `
+      <div style="padding:14px 16px 6px;margin-top:10px;border-top:1px solid rgba(255,255,255,.06)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;font-weight:800;color:var(--green1);background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.28);padding:4px 12px;border-radius:999px">⚡ Local AI</span>
+          <span style="font-size:12px;color:var(--dim)">Qurilmangizda ishlaydi — cheksiz, kvotasiz</span>
+        </div>
+      </div>`
+      + _fmtRow('🧠 Sayt/matn tahlili', 'Cheksiz', null, 'var(--green1)', 'Mahalliy NIEX AI Brain qurilmangizda ishlaydi')
+      + _fmtRow('🛡️ Browser himoyasi', 'Cheksiz', null, 'var(--green1)', 'Real-time protection — hech qanday cloud kvotaga tegilmaydi')
+      + _fmtRow('🎯 Real-time scan', 'Cheksiz', null, 'var(--green1)', 'Sahifa yuklanganda darhol lokal AI skan');
+
+    box.innerHTML = header + cloudRows + localSection;
+  }catch(e){ box.textContent = 'Limit holatini olish imkoni bo\'lmadi.'; }
+}
+
+if(P){
+  // AUTO-SYNC AUTH: agar localStorage'da hisob bor bo'lsa (garage/classic'da sign in
+  // qilingan), lekin main process'da currentAccount o'rnatilmagan bo'lsa (masalan
+  // premium.html to'g'ridan-to'g'ri ochilgan bo'lsa) — account-set IPC yuboramiz.
+  // Bu "hisobga kirilgan bo'lsa ham hisobingizga kirilmagan devotti" bug'ini yopadi.
+  (function autoSyncAuth(){
+    try {
+      var raw = localStorage.getItem('sn_user');
+      if (!raw || raw === 'null') return;
+      var u = JSON.parse(raw);
+      if (!u || !u.email) return;
+      if (window._ipc && window._ipc.send) {
+        window._ipc.send('account-set', u.email);
+      }
+    } catch(e) {}
+  })();
+  // Kichik delay — account-set IPC main process'da qayta ishlanishi uchun
+  setTimeout(function(){
+    P.getStatus().then(render).catch(()=>{});
+    renderAiLimits();
+  }, 120);
+  setInterval(renderAiLimits, 20000);
+  P.onStatusChanged((st)=>{ render(st); if(st && st.isPro) toast('🎉 Premium faollashtirildi!'); });
+}
+
+// Pending payment'ni foydalanuvchi o'zi bekor qilishi mumkin — qayta topshirishga imkon.
+const cancelPendingBtn = document.getElementById('cancel-pending-btn');
+if (cancelPendingBtn) {
+  cancelPendingBtn.addEventListener('click', async () => {
+    if (!confirm('To\'lov so\'rovingizni bekor qilmoqchimisiz? Bundan keyin yangi so\'rov topshira olasiz.')) return;
+    try {
+      const r = await window.safenet_premium?.cancelPending?.();
+      if (r && r.ok) {
+        toast('So\'rov bekor qilindi. Yangi so\'rov topshirishingiz mumkin.');
+        setTimeout(async () => { const st = await P.getStatus(); render(st); }, 300);
+      } else {
+        toast(r?.error || 'Bekor qilishda xatolik.');
+      }
+    } catch (e) { toast('Xatolik: ' + (e?.message || e)); }
+  });
+}
+</script>
+</body>
+</html>

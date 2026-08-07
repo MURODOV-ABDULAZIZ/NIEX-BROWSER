@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Niex — Yangi bosh sahifa</title>
+<style>
+/* ================================================================
+   NIEX Yangi Bosh Sahifa
+   - Yuqoriga sidebar (profil, sozlamalar, focus, premium, quicklinks)
+   - Quick links drag-and-drop bilan (safenethome bilan sync)
+   - Focus Mode tugmasi: bosilganda focus-fullscreen.html ochiladi
+   - NIEX Premium tugmasi: premium-page.html ochiladi
+   - Tezkor havolalar tugmasi: quicklinks-page.html ochiladi
+   - Focus tugmasi — toggle emas, to'liq ekran
+   ================================================================ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0A0E1A; --panel:rgba(15,23,42,.78); --panel-strong:rgba(15,23,42,.96);
+  --text:#E8F0FE; --muted:#94A3B8; --border:rgba(255,255,255,.08);
+  --accent:#00E5A0; --accent-soft:rgba(0,229,160,.16);
+  --gold:#FFC857; --blue:#3B82F6; --purple:#8B5CF6; --danger:#FF4757; --warn:#FF7A45;
+}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+body{
+  background:
+    radial-gradient(circle at 20% 10%, rgba(0,229,160,.14), transparent 12%),
+    radial-gradient(circle at 85% 20%, rgba(59,130,246,.14), transparent 15%),
+    linear-gradient(180deg, #0A0E1A 0%, #08101C 100%);
+}
+.layout{display:grid;max-width:1280px;margin:0 auto;padding:24px;grid-template-columns:280px minmax(0,1fr);gap:24px;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+  display:flex;flex-direction:column;gap:14px;
+  padding:22px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:28px;backdrop-filter:blur(30px);
+  box-shadow:0 40px 90px rgba(0,0,0,.18);
+  height:fit-content;
+}
+.sidebar-brand{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.brand-icon{
+  width:48px;height:48px;border-radius:14px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#00E5A0,#3B82F6);
+  font-size:22px;box-shadow:0 8px 24px rgba(0,229,160,.4);
+}
+.sidebar-brand .brand-title{font-size:18px;font-weight:800}
+.sidebar-brand .brand-sub{font-size:12px;color:var(--muted)}
+
+.profile-card{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:18px;
+}
+.avatar{
+  width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,#00E5A0,#3B82F6);
+  display:grid;place-items:center;font-size:18px;font-weight:800;color:#03130F;
+  flex-shrink:0;
+}
+.profile-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.profile-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-email{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.sidebar-section{
+  margin-top:10px;
+}
+.sidebar-section-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-left:6px;font-weight:700}
+
+.sidebar-btn{
+  display:flex;align-items:center;gap:10px;
+  width:100%;padding:12px 14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;color:var(--text);
+  font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+  text-align:left;font-family:inherit;
+  position:relative;
+}
+.sidebar-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(0,229,160,.3);transform:translateX(2px)}
+.sidebar-btn.active{background:rgba(0,229,160,.1);border-color:var(--accent);color:var(--accent)}
+.sidebar-btn.pro-btn{
+  background:linear-gradient(135deg,rgba(255,200,87,.18),rgba(255,122,69,.1));
+  border-color:rgba(255,200,87,.4);
+  color:#FFD18A;
+}
+.sidebar-btn.pro-btn:hover{
+  background:linear-gradient(135deg,rgba(255,200,87,.3),rgba(255,122,69,.15));
+  border-color:var(--gold);
+  transform:translateX(2px);
+}
+.sidebar-btn:focus-mode{
+  background:linear-gradient(135deg,rgba(0,229,160,.18),rgba(59,130,246,.1));
+  border-color:rgba(0,229,160,.4);
+  color:var(--accent);
+}
+.sidebar-btn:focus-mode:hover{
+  background:linear-gradient(135deg,rgba(0,229,160,.3),rgba(59,130,246,.15));
+}
+.sidebar-btn .badge{
+  margin-left:auto;background:#FF4757;color:#fff;
+  font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700;
+}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.mini-stat{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.15);border-radius:12px;padding:10px 12px;text-align:center}
+.mini-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.mini-stat-value{font-size:18px;font-weight:800;color:var(--accent);margin-top:3px}
+
+/* Main content */
+.content{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:30px 0 60px;gap:28px}
+
+.hero{text-align:center;margin-bottom:6px}
+.hero-logo{
+  width:120px;height:120px;margin:0 auto 14px;
+  display:grid;place-items:center;
+  font-size:60px;
+  background:linear-gradient(135deg,rgba(0,229,160,.18),rgba(59,130,246,.12));
+  border-radius:32px;
+  border:1px solid rgba(0,229,160,.2);
+  box-shadow:0 30px 70px rgba(0,229,160,.18);
+}
+.hero-title{font-size:36px;font-weight:900;letter-spacing:1px;margin-bottom:6px;background:linear-gradient(135deg,#00E5A0,#3B82F6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-tag{font-size:14px;color:var(--muted);font-weight:600;letter-spacing:.5px}
+
+/* Search */
+.search-wrap{
+  width:640px;max-width:92vw;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:36px;
+  padding:6px 6px 6px 22px;
+  display:flex;align-items:center;gap:10px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 24px 60px rgba(0,0,0,.18);
+}
+.search-wrap:focus-within{border-color:var(--accent);box-shadow:0 24px 60px rgba(0,229,160,.25)}
+.search-input{flex:1;background:transparent;border:none;color:var(--text);font-size:15px;outline:none;font-family:inherit;padding:12px 0}
+.search-go{
+  width:48px;height:48px;background:linear-gradient(135deg,#00E5A0,#00C589);
+  border:none;border-radius:30px;display:grid;place-items:center;cursor:pointer;font-size:18px;color:#03130F;transition:all .2s;
+}
+.search-go:hover{transform:scale(1.05);box-shadow:0 0 18px rgba(0,229,160,.45)}
+
+/* Quick links */
+.quick-section{width:640px;max-width:92vw;position:relative}
+.quick-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px}
+.quick-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.quick-edit-btn{
+  font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;
+  padding:4px 10px;border-radius:8px;transition:all .2s;font-family:inherit;font-weight:600;
+}
+.quick-edit-btn:hover{background:var(--accent-soft)}
+.quick-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:40px}
+.quick-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;color:var(--text);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.quick-btn:hover{background:rgba(255,255,255,.12);border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.quick-empty{color:var(--muted);font-size:13px;padding:14px;text-align:center;width:100%}
+.quick-add{
+  padding:10px 14px;background:rgba(0,229,160,.08);border:1px dashed rgba(0,229,160,.35);
+  border-radius:22px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;
+}
+.quick-add:hover{background:rgba(0,229,160,.16);transform:translateY(-1px)}
+
+/* Focus bar */
+.focus-bar{
+  width:640px;max-width:92vw;
+  background:linear-gradient(135deg, rgba(0,229,160,.1), rgba(59,130,246,.08));
+  border:1px solid rgba(0,229,160,.3);
+  border-radius:20px;
+  padding:14px 18px;
+  display:flex;align-items:center;gap:14px;
+  backdrop-filter:blur(16px);
+}
+.focus-bar-icon{font-size:24px}
+.focus-bar-info{flex:1}
+.focus-bar-title{font-size:13px;font-weight:700;color:var(--accent)}
+.focus-bar-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.focus-bar-btn{
+  background:linear-gradient(135deg,#00E5A0,#00C589);color:#03130F;border:none;
+  padding:8px 16px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.focus-bar-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,229,160,.35)}
+
+/* Premium banner */
+.premium-banner{
+  width:640px;max-width:92vw;
+  background:linear-gradient(135deg, rgba(255,200,87,.12), rgba(255,122,69,.08));
+  border:1px solid rgba(255,200,87,.3);
+  border-radius:20px;
+  padding:14px 18px;
+  display:flex;align-items:center;gap:14px;
+  backdrop-filter:blur(16px);
+}
+.premium-banner-icon{font-size:26px}
+.premium-banner-info{flex:1}
+.premium-banner-title{font-size:13px;font-weight:700;color:#FFD18A}
+.premium-banner-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.premium-banner-btn{
+  background:linear-gradient(135deg,#FFC857,#FFB52E);color:#2A1A00;border:none;
+  padding:8px 16px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.premium-banner-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,200,87,.4)}
+
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  background:rgba(15,23,42,.96);border:1px solid var(--border);color:var(--text);
+  padding:12px 22px;border-radius:12px;font-size:13px;font-weight:600;
+  box-shadow:0 14px 40px rgba(0,0,0,.4);z-index:9999;
+}
+
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 12px; gap: 14px; }
+  .sidebar { padding: 16px; }
+  .content { padding-top: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">◆</div>
+      <div>
+        <div class="brand-title">NIEX</div>
+        <div class="brand-sub">Intelligent Ecosystem</div>
+      </div>
+    </div>
+
+    <div class="profile-card" id="profile-card">
+      <div class="avatar" id="profile-avatar">?</div>
+      <div class="profile-info">
+        <div class="profile-name" id="profile-name">Mehmon</div>
+        <div class="profile-email" id="profile-email">Tizimga kiring</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Asosiy</div>
+      <button class="sidebar-btn" onclick="doFocus()">
+        🎯 <span>Focus Mode</span>
+        <span class="badge" id="focus-active-badge" style="display:none">●</span>
+      </button>
+      <button class="sidebar-btn" onclick="openQuickLinksPage()">
+        🔗 <span>Tezkor havolalar</span>
+        <span class="badge" id="quicklinks-count" style="display:none">0</span>
+      </button>
+      <button class="sidebar-btn" onclick="openSearch()">
+        🔍 <span>Qidiruv tizimi</span>
+      </button>
+      <button class="sidebar-btn" onclick="openHistory()">
+        📚 <span>Tarix</span>
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Hisob</div>
+      <button class="sidebar-btn" onclick="signIn()">👤 Tizimga kirish</button>
+      <button class="sidebar-btn" onclick="signOut()">🚪 Chiqish</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Sifat</div>
+      <button class="sidebar-btn pro-btn" onclick="openPremium()">
+        👑 <span>NIEX Premium</span>
+      </button>
+      <button class="sidebar-btn" onclick="openFeedback()">🗨️ Fikr-mulohaza</button>
+      <button class="sidebar-btn" onclick="openFeedbackList()">📬 Feedback xabarlari</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Sozlamalar</div>
+      <button class="sidebar-btn" onclick="toggleTheme()">🌗 Tema</button>
+      <button class="sidebar-btn" onclick="openSettings()">⚙️ Sozlamalar</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="mini-stat">
+        <div class="mini-stat-label">Bloklangan</div>
+        <div class="mini-stat-value" id="mini-blocked">0</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-label">AI faol</div>
+        <div class="mini-stat-value" style="color:var(--blue)">●</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="content">
+    <div class="hero">
+      <div class="hero-logo">◆</div>
+      <div class="hero-title">NIEX</div>
+      <div class="hero-tag">Intelligent Ecosystem</div>
+    </div>
+
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text"
+        placeholder="Qidirish yoki URL kiriting..." autocomplete="off" autofocus />
+      <button class="search-go" onclick="doSearch()">🔍</button>
+    </div>
+
+    <div class="quick-section">
+      <div class="quick-header">
+        <span class="quick-label">⚡ Tezkor havolalar</span>
+        <button class="quick-edit-btn" onclick="openQuickLinksPage()">✏️ Tahrirlash</button>
+      </div>
+      <div class="quick-grid" id="quick-grid"></div>
+    </div>
+
+    <div class="focus-bar">
+      <div class="focus-bar-icon">🎯</div>
+      <div class="focus-bar-info">
+        <div class="focus-bar-title" id="focus-bar-title">Focus Mode tayyor</div>
+        <div class="focus-bar-sub" id="focus-bar-sub">Bosish orqali sessiya boshlang</div>
+      </div>
+      <button class="focus-bar-btn" onclick="doFocus()">▶ Boshlash</button>
+    </div>
+
+    <div class="premium-banner">
+      <div class="premium-banner-icon">👑</div>
+      <div class="premium-banner-info">
+        <div class="premium-banner-title">NIEX Premium</div>
+        <div class="premium-banner-sub">Focus, AI va bulutli sinxron</div>
+      </div>
+      <button class="premium-banner-btn" onclick="openPremium()">Pro ga o'tish →</button>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   NIEX Yangi Bosh Sahifa — Local-first.
+   - Quick links: sn_links_v2 dan o'qiladi (safenethome bilan mos)
+   - Focus tugmasi: focus-fullscreen.html ga yo'naltiradi (toggle emas!)
+   - Premium: premium-page.html ga yo'naltiradi
+   - Quicklinks: quicklinks-page.html ga yo'naltiradi
+   ============================================================ */
+
+const ENGINES = {
+  ddg: 'https://duckduckgo.com/?q=',
+  google: 'https://www.google.com/search?q=',
+};
+let settings = JSON.parse(localStorage.getItem('sn_settings') || '{}');
+if (typeof settings.dark === 'undefined') settings.dark = true;
+let user = JSON.parse(localStorage.getItem('sn_user') || 'null');
+
+function navigate(url) {
+  if (window.safenet && window.safenet.navigate) return window.safenet.navigate(url);
+  if (window._ipc && window._ipc.send) return window._ipc.send('navigate', url);
+  window.location.href = url;
+}
+
+function doSearch() {
+  const val = document.getElementById('search-input').value.trim();
+  if (!val) return;
+  let url = val;
+  if (!/^https?:\/\//i.test(url)) {
+    if (url.includes('.') && !val.includes(' ')) url = 'https://' + url;
+    else url = ENGINES[settings.searchEngine || 'ddg'] + encodeURIComponent(val);
+  }
+  navigate(url);
+}
+
+/* ---------- Sidebar actions ---------- */
+function doFocus() {
+  // ❗ TOGGLE EMAS. To'liq ekran Focus Mode sahifasiga o'tadi.
+  navigate('focus-fullscreen.html');
+}
+function openPremium() {
+  navigate('premium-page.html');
+}
+function openQuickLinksPage() {
+  navigate('quicklinks-page.html');
+}
+function openSearch() {
+  navigate('home-search.html');
+}
+function openHistory() {
+  navigate('home-history.html');
+}
+function signIn() {
+  if (window.safenet_auth && window.safenet_auth.signInGoogle) {
+    window.safenet_auth.signInGoogle();
+  } else {
+    showToast('⚠️ Auth bridge mavjud emas');
+  }
+}
+function signOut() {
+  if (window.safenet_auth && window.safenet_auth.signOut) {
+    window.safenet_auth.signOut();
+  } else {
+    localStorage.removeItem('sn_user');
+    user = null;
+    renderProfile();
+    showToast('✅ Chiqildi');
+  }
+}
+function openSettings() {
+  navigate('home-settings.html');
+}
+function openFeedback() {
+  if (typeof window.openFeedbackModal === 'function') return window.openFeedbackModal();
+  // iframe-ish: yangi page
+  navigate('home-feedback.html');
+}
+function openFeedbackList() {
+  if (typeof window.openFeedbackListModal === 'function') return window.openFeedbackListModal();
+  navigate('home-feedback-list.html');
+}
+function toggleTheme() {
+  settings.dark = !settings.dark;
+  localStorage.setItem('sn_settings', JSON.stringify(settings));
+  applyTheme();
+  showToast('🎨 Tema: ' + (settings.dark ? 'Qorong\'i' : 'Yorug\''));
+}
+
+function applyTheme() {
+  document.body.style.background = settings.dark
+    ? 'radial-gradient(circle at 20% 10%, rgba(0,229,160,.14), transparent 12%), radial-gradient(circle at 85% 20%, rgba(59,130,246,.14), transparent 15%), linear-gradient(180deg, #0A0E1A 0%, #08101C 100%)'
+    : 'linear-gradient(180deg, #F4F7FB 0%, #E5EDF8 100%)';
+  document.body.style.color = settings.dark ? '#E8F0FE' : '#1F2937';
+}
+
+/* ---------- Quick links render ---------- */
+function loadLinks() {
+  try {
+    const raw = localStorage.getItem('sn_links_v2') || localStorage.getItem('sn_links');
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length) return arr;
+    }
+  } catch (e) {}
+  return [
+    { name:'YouTube', url:'https://youtube.com', emoji:'📺' },
+    { name:'Wikipedia', url:'https://wikipedia.org', emoji:'📖' },
+    { name:'Khan Academy', url:'https://khanacademy.org', emoji:'📚' },
+    { name:'GitHub', url:'https://github.com', emoji:'💻' },
+    { name:'Tarjimon', url:'https://translate.google.com', emoji:'🌐' },
+    { name:'Gmail', url:'https://mail.google.com', emoji:'📧' },
+  ];
+}
+function renderQuickLinks() {
+  const links = loadLinks();
+  const grid = document.getElementById('quick-grid');
+  grid.innerHTML = '';
+  if (!links.length) {
+    grid.innerHTML = '<div class="quick-empty">Havolalar yo\'q. ✏️ Tahrirlash orqali qo\'shing.</div>';
+  } else {
+    for (const l of links) {
+      const b = document.createElement('button');
+      b.className = 'quick-btn';
+      b.style.color = l.color || '';
+      b.innerHTML = `<span>${l.emoji||'🔗'}</span>${escapeHTML(l.name)}`;
+      b.onclick = () => navigate(l.url);
+      grid.appendChild(b);
+    }
+  }
+  const add = document.createElement('button');
+  add.className = 'quick-add';
+  add.textContent = '+ Qo\'shish';
+  add.onclick = openQuickLinksPage;
+  grid.appendChild(add);
+  document.getElementById('quicklinks-count').textContent = links.length;
+  document.getElementById('quicklinks-count').style.display = links.length ? '' : 'none';
+}
+
+/* ---------- Focus state ---------- */
+async function refreshFocusState() {
+  // 1. Local storage'dan
+  let session = null;
+  try {
+    const localActive = localStorage.getItem('nm_active_session_v1');
+    if (localActive) session = JSON.parse(localActive);
+  } catch (e) {}
+  // 2. Asosiy bridge orqali
+  if (!session) {
+    try {
+      const data = await (window._ipc ? window._ipc.invoke('focus-get') : (window.safenet?.focusGet?.() || Promise.resolve(null)));
+      if (data && data.activeSession && data.activeSession.status === 'active') session = data.activeSession;
+    } catch (e) {}
+  }
+  if (session && session.status === 'active' && session.endsAt > Date.now()) {
+    document.getElementById('focus-bar-title').textContent = '🎯 Focus faol';
+    document.getElementById('focus-bar-sub').textContent = `Qolgan vaqt: ${Math.ceil((session.endsAt - Date.now())/60000)} daqiqa`;
+    document.getElementById('focus-active-badge').style.display = '';
+    document.querySelectorAll('.focus-bar-btn').forEach(b => b.textContent = '📊 Ochish');
+  } else {
+    document.getElementById('focus-bar-title').textContent = 'Focus Mode tayyor';
+    document.getElementById('focus-bar-sub').textContent = 'Bosish orqali sessiya boshlang';
+    document.getElementById('focus-active-badge').style.display = 'none';
+  }
+}
+
+/* ---------- Profile ---------- */
+function renderProfile() {
+  if (user && user.email) {
+    document.getElementById('profile-name').textContent = user.name || user.email.split('@')[0];
+    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('profile-avatar').textContent = (user.name || user.email || '?')[0].toUpperCase();
+  } else {
+    document.getElementById('profile-name').textContent = 'Mehmon';
+    document.getElementById('profile-email').textContent = 'Tizimga kiring';
+  }
+}
+
+/* ---------- Utils ---------- */
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+function escapeHTML(s) {
+  return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- Stats counter ---------- */
+let lastBlock = 0;
+function pollStats() {
+  try {
+    if (window.safenet && window.safenet.onStats) {
+      window.safenet.onStats(s => {
+        const total = (s.block || 0) + (s.blockImg || 0);
+        document.getElementById('mini-blocked').textContent = total;
+      });
+    }
+  } catch (e) {}
+}
+
+/* ---------- Auth state listener ---------- */
+try {
+  if (window.safenet_auth && window.safenet_auth.onGoogleAuth) {
+    window.safenet_auth.onGoogleAuth(u => {
+      if (u) { user = u; localStorage.setItem('sn_user', JSON.stringify(u)); }
+      else { user = null; localStorage.removeItem('sn_user'); }
+      renderProfile();
+    });
+  }
+} catch (e) {}
+
+/* ---------- INIT ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme();
+  renderProfile();
+  renderQuickLinks();
+  refreshFocusState();
+  pollStats();
+  // Har soniyada focus holatini tekshirish
+  setInterval(refreshFocusState, 5000);
+  setInterval(renderQuickLinks, 30000); // quicklinks sahifasidan o'zgartirilgan bo'lsa
+
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+});
+</script>
+
+</body>
+</html>

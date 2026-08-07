@@ -1,0 +1,12 @@
+.env
+.env.local
+dist/
+node_modules/
+*.backup
+*.fixed
+*.stub-broken
+output.txt
+failed_injections/
+.venv/
+.agents/
+.gemini/

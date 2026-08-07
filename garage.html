@@ -1,0 +1,2802 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Niex — Garage</title>
+<style>
+/* ================================================================
+   NIEX GARAGE — video-fon (Hailuo) sekinlashtirilgan, garaj vibe.
+   HALOL: bu real-time 3D EMAS. Buni to'g'ridan-to'g'ri aytdim.
+   Ammo Electron uchun to'g'ri: <video> + CSS parallax + rasm cardlar
+   = 60fps, ~200MB xotira, batareya do'st. Real 3D 7-10GB olardi.
+   ================================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+html, body { height: 100%; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #030507; color: #eaf0fb; }
+
+/* ── VIDEO FON ─────────────────────────────────────────────
+   Kalit trick: playbackRate = 0.35 (JS'дан). Kamera oldinga
+   siljishi juda tez edi — endi sekin, kinematik his. */
+.bg-wrap { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+.bg-video { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
+  width: auto; height: auto; transform: translate(-50%, -50%) scale(1.08);
+  filter: brightness(0.55) contrast(1.15) saturate(0.9); }
+/* Vinyette + emerald tint (Niex brend) */
+.bg-tint { position: absolute; inset: 0; background:
+  radial-gradient(ellipse at center, transparent 30%, rgba(3,5,7,.75) 80%, #030507 100%),
+  linear-gradient(180deg, rgba(0,229,160,.06) 0%, transparent 40%, rgba(0,229,160,.08) 100%); }
+/* Skanerlash chizig'i (subtle) */
+.scanline { position: absolute; inset: 0; background:
+  repeating-linear-gradient(180deg, transparent 0, transparent 2px, rgba(255,255,255,.015) 3px, transparent 4px);
+  pointer-events: none; mix-blend-mode: overlay; }
+/* Fog qatlami — pastdan yuqoriga */
+.fog { position: absolute; inset: 0; background:
+  linear-gradient(0deg, rgba(0,20,15,.5) 0%, transparent 35%);
+  pointer-events: none; }
+
+/* ── FLOATING DUST PARTICLES (CSS-only, 60fps) ────────────── */
+.dust { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.dust span { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #7fffcf;
+  opacity: 0; box-shadow: 0 0 6px #00e5a0; animation: drift 18s linear infinite; }
+@keyframes drift {
+  0% { transform: translate(0, 100vh) scale(0.6); opacity: 0; }
+  10% { opacity: .6; }
+  90% { opacity: .3; }
+  100% { transform: translate(20px, -10vh) scale(1.2); opacity: 0; }
+}
+
+/* ── HUD (yuqori qatlam) ──────────────────────────────────── */
+.wrap { position: relative; z-index: 3; height: 100vh; display: flex; flex-direction: column; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; gap: 12px;
+  backdrop-filter: blur(12px); background: rgba(3,5,7,.35); border-bottom: 1px solid rgba(0,229,160,.08);
+  flex-wrap: nowrap; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 18px; letter-spacing: 1px;
+  min-width: 0; flex-shrink: 1; overflow: hidden; }
+.brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-mark { width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, #00E5A0, #00C885);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+  box-shadow: 0 0 16px rgba(0,229,160,.5), inset 0 0 12px rgba(255,255,255,.15); }
+.brand-name { background: linear-gradient(120deg, #eaf0fb, #7fffcf 60%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand-sub { font-size: 10px; letter-spacing: 3px; color: #4a8b7a; margin-left: 6px; }
+.hud-right { display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: nowrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,229,160,.08);
+  border: 1px solid rgba(0,229,160,.25); color: #7fffcf; border-radius: 999px;
+  padding: 6px 12px; font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  white-space: nowrap; flex-shrink: 0; }
+@media (max-width: 900px) {
+  .brand-sub { display: none; }
+  .chip { padding: 6px 9px; font-size: 10px; }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 12px 14px; }
+  .brand-name { font-size: 15px; }
+  .chip:not(.theme-btn) { display: none; }
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: #00E5A0;
+  box-shadow: 0 0 8px #00E5A0; animation: pulse 2s infinite; }
+.theme-btn { cursor: pointer; font-family: inherit; transition: all .15s; }
+.theme-btn:hover { background: rgba(0,229,160,.16); border-color: rgba(0,229,160,.5); color: #fff; }
+.theme-btn:active { transform: scale(.94); }
+.hamb { padding: 6px 10px; }
+.hamb-icon { display: inline-flex; flex-direction: column; gap: 3px; width: 14px; }
+.hamb-icon span { display: block; height: 2px; background: #7fffcf; border-radius: 2px; transition: all .2s; }
+.hamb.open .hamb-icon span:nth-child(1) { transform: translateY(5px) rotate(45deg); }
+.hamb.open .hamb-icon span:nth-child(2) { opacity: 0; }
+.hamb.open .hamb-icon span:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
+
+/* Logo (rasm mavjud bo'lsa emoji o'rniga) */
+.brand-mark img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; display: block; }
+
+/* ── SIDE MENU (o'ngdan sirg'aluvchi panel) ────────────── */
+.menu-backdrop { position: fixed; inset: 0; background: rgba(3,5,7,.65); backdrop-filter: blur(4px);
+  z-index: 90; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.menu-backdrop.open { opacity: 1; pointer-events: auto; }
+.side-menu { position: fixed; top: 0; right: 0; height: 100vh; width: min(340px, 88vw);
+  background: linear-gradient(180deg, #0a1218 0%, #061013 100%);
+  border-left: 1px solid rgba(0,229,160,.2); z-index: 100;
+  transform: translateX(100%); transition: transform .3s cubic-bezier(.2,.7,.2,1);
+  box-shadow: -20px 0 60px rgba(0,0,0,.6); display: flex; flex-direction: column;
+  overflow-y: auto; }
+.side-menu.open { transform: translateX(0); }
+.side-head { padding: 22px 24px 18px; border-bottom: 1px solid rgba(0,229,160,.1);
+  display: flex; align-items: center; justify-content: space-between; }
+.side-head h3 { font-size: 13px; letter-spacing: 4px; color: #7fffcf; font-weight: 700; }
+.side-close { background: none; border: none; color: #6b8a80; font-size: 22px; cursor: pointer;
+  padding: 0 4px; line-height: 1; transition: color .15s; }
+.side-close:hover { color: #7fffcf; }
+
+.side-user { padding: 20px 24px; border-bottom: 1px solid rgba(0,229,160,.08);
+  display: flex; align-items: center; gap: 14px; }
+.side-avatar { width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #00E5A0, #00C885); display: flex; align-items: center;
+  justify-content: center; font-size: 20px; font-weight: 800; color: #032b1f;
+  box-shadow: 0 0 20px rgba(0,229,160,.35); flex-shrink: 0; }
+.side-user-info { min-width: 0; flex: 1; }
+.side-user-name { font-size: 14px; font-weight: 700; color: #eaf0fb; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.side-user-email { font-size: 11px; color: #6b8a80; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; margin-top: 2px; }
+.side-user-role { display: inline-block; margin-top: 6px; font-size: 9px; letter-spacing: 1px;
+  color: #7fffcf; background: rgba(0,229,160,.1); padding: 3px 8px; border-radius: 999px;
+  text-transform: uppercase; font-weight: 700; }
+
+.side-items { padding: 14px 0; flex: 1; }
+.side-item { display: flex; align-items: center; gap: 14px; padding: 12px 24px;
+  color: #cfe0d7; font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left; transition: all .15s;
+  font-family: inherit; }
+.side-item:hover { background: rgba(0,229,160,.08); color: #7fffcf; padding-left: 30px; }
+.side-item .side-ic { width: 28px; height: 28px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; font-size: 15px;
+  background: rgba(0,229,160,.08); flex-shrink: 0; }
+.side-item.danger { color: #ff8a98; }
+.side-item.danger:hover { background: rgba(255,90,110,.08); color: #ff5a6e; }
+.side-item.danger .side-ic { background: rgba(255,90,110,.1); }
+.side-divider { height: 1px; background: rgba(0,229,160,.1); margin: 8px 24px; }
+.side-foot { padding: 18px 24px; border-top: 1px solid rgba(0,229,160,.1);
+  font-size: 10px; color: #4a8b7a; letter-spacing: 2px; text-align: center; }
+
+/* ── IN-PAGE PANEL MODAL (Profile, Settings, History, ...) ─────
+   Har panel Garage uslubida native HTML orqali ochiladi. Iframe YO'Q. */
+.panel-modal { position: fixed; inset: 0; z-index: 200; display: none; }
+.panel-modal.open { display: block; }
+.panel-modal-backdrop { position: absolute; inset: 0; background: rgba(3,5,7,.82);
+  backdrop-filter: blur(6px); }
+.panel-modal-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  width: min(760px, 92vw); max-height: min(720px, 88vh);
+  background: linear-gradient(180deg, #0a1218 0%, #061013 100%);
+  border: 1px solid rgba(0,229,160,.25); border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(0,229,160,.08);
+  overflow: hidden; display: flex; flex-direction: column; }
+.panel-modal-head { display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid rgba(0,229,160,.12);
+  background: rgba(0,229,160,.03); flex-shrink: 0; }
+.panel-modal-title { font-size: 14px; font-weight: 700; letter-spacing: 3px;
+  color: #7fffcf; text-transform: uppercase; }
+.panel-modal-close { background: rgba(0,229,160,.1); border: 1px solid rgba(0,229,160,.25);
+  color: #7fffcf; border-radius: 8px; width: 30px; height: 30px; cursor: pointer;
+  font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; }
+.panel-modal-close:hover { background: rgba(0,229,160,.22); }
+.panel-modal-close:active { transform: scale(.94); }
+.panel-modal-body { flex: 1; overflow-y: auto; padding: 22px 24px;
+  color: #eaf0fb; font-size: 13px; line-height: 1.5; }
+
+/* Panel'lar ichidagi umumiy elementlar (native Garage uslubi) */
+.pnl-row { display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; border-bottom: 1px solid rgba(0,229,160,.06); gap: 16px; }
+.pnl-row:last-child { border-bottom: none; }
+.pnl-row-info { min-width: 0; flex: 1; }
+.pnl-row-title { font-size: 13px; font-weight: 600; color: #eaf0fb; }
+.pnl-row-desc { font-size: 11px; color: #6b8a80; margin-top: 3px; }
+.pnl-section { margin-bottom: 22px; }
+.pnl-section-h { font-size: 10px; letter-spacing: 3px; color: #4a8b7a;
+  text-transform: uppercase; margin-bottom: 10px; font-weight: 700; }
+.pnl-btn { background: linear-gradient(135deg,#00E5A0,#00C885); color: #032b1f;
+  border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all .15s; font-family: inherit; }
+.pnl-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,229,160,.3); }
+.pnl-btn:active { transform: scale(.96); }
+.pnl-btn.ghost { background: transparent; border: 1px solid rgba(0,229,160,.3); color: #7fffcf; }
+.pnl-btn.ghost:hover { background: rgba(0,229,160,.1); box-shadow: none; }
+.pnl-btn.danger { background: rgba(255,90,110,.15); border: 1px solid rgba(255,90,110,.35);
+  color: #ff8a98; }
+.pnl-btn.danger:hover { background: rgba(255,90,110,.25); box-shadow: 0 6px 18px rgba(255,90,110,.2); }
+.pnl-select, .pnl-input { background: rgba(0,229,160,.05); border: 1px solid rgba(0,229,160,.2);
+  color: #eaf0fb; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-family: inherit; }
+.pnl-select:focus, .pnl-input:focus { outline: none; border-color: rgba(0,229,160,.5); }
+/* Toggle switch */
+.pnl-toggle { position: relative; width: 42px; height: 22px; background: rgba(255,255,255,.08);
+  border-radius: 999px; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+.pnl-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+  background: #6b8a80; border-radius: 50%; transition: all .2s; }
+.pnl-toggle.on { background: rgba(0,229,160,.35); }
+.pnl-toggle.on::after { background: #00E5A0; left: 23px; box-shadow: 0 0 8px rgba(0,229,160,.6); }
+.pnl-empty { text-align: center; padding: 40px 20px; color: #4a8b7a; font-size: 12px; }
+.pnl-empty-ic { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ── QIDIRUV (asosiy) ─────────────────────────────────────── */
+.center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 24px; text-align: center; }
+.tagline { font-size: 11px; letter-spacing: 6px; color: #4a8b7a; margin-bottom: 20px; text-transform: uppercase; }
+.hero { font-size: clamp(38px, 6vw, 76px); font-weight: 900; letter-spacing: -2px; line-height: 1;
+  text-wrap: balance; margin-bottom: 14px; }
+.hero .g { background: linear-gradient(120deg, #00E5A0, #7fffcf 60%, #ffffff);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-sub { color: #6b8a80; font-size: 14px; letter-spacing: .5px; max-width: 480px; margin: 0 auto 34px; }
+
+.search-box { position: relative; width: min(680px, 92vw); }
+.search-box::before { content:""; position: absolute; inset: -1px; border-radius: 16px;
+  background: linear-gradient(120deg, rgba(0,229,160,.6), transparent 40%, rgba(0,229,160,.6));
+  filter: blur(12px); opacity: .45; z-index: -1; }
+.search { width: 100%; height: 60px; padding: 0 130px 0 22px; border-radius: 16px;
+  background: rgba(8, 14, 20, .82); border: 1px solid rgba(0,229,160,.2);
+  color: #eaf0fb; font-size: 15px; outline: none; backdrop-filter: blur(10px);
+  transition: border-color .2s, box-shadow .2s; }
+.search::placeholder { color: #4a5c6b; }
+.search:focus { border-color: rgba(0,229,160,.5); box-shadow: 0 0 0 3px rgba(0,229,160,.12); }
+.search-btn { position: absolute; right: 8px; top: 8px; height: 44px; padding: 0 22px;
+  border-radius: 12px; border: none; cursor: pointer; font-weight: 800; font-size: 13px;
+  background: linear-gradient(135deg, #00E5A0, #00C885); color: #032b1f;
+  box-shadow: 0 6px 20px rgba(0,229,160,.35); transition: transform .15s, box-shadow .2s; }
+.search-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(0,229,160,.5); }
+.search-btn:active { transform: scale(.96); }
+
+.quick { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 26px; }
+.q { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+  background: rgba(8,14,20,.7); border: 1px solid rgba(255,255,255,.08); color: #cfe0d7;
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .18s; backdrop-filter: blur(8px); }
+.q:hover { border-color: rgba(0,229,160,.4); color: #7fffcf; transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,229,160,.15); }
+
+/* ── CAR RAIL (pastdagi rasm cardlar) ─────────────────────── */
+.rail { position: relative; padding: 24px 0 32px; overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%); }
+.rail-title { text-align: center; font-size: 10px; letter-spacing: 4px; color: #4a8b7a;
+  text-transform: uppercase; margin-bottom: 14px; }
+.rail-track { display: flex; gap: 20px; padding: 0 40px; animation: slide 60s linear infinite;
+  width: max-content; }
+.rail:hover .rail-track { animation-play-state: paused; }
+@keyframes slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+/* Professional gallery rail — kartochka BALANDLIGI qat'iy, ENI rasm
+   nisbatidan kelib chiqadi. Shu sabab hech bir rasm kesilmaydi va
+   cho'zilmaydi: har bir mashina to'liq, o'z proporsiyasida ko'rinadi.
+   Portret plakat → tor kartochka, landshaft plakat → keng kartochka. */
+.card { flex: 0 0 auto; height: 300px; width: auto; border-radius: 14px;
+  overflow: hidden; position: relative;
+  background: radial-gradient(ellipse at center, #0f1a24 0%, #050a0f 100%);
+  border: 1px solid rgba(0,229,160,.12); cursor: pointer;
+  transition: transform .3s cubic-bezier(.2,.7,.2,1), border-color .3s, box-shadow .3s; }
+.card img { height: 100%; width: auto; display: block;
+  transition: transform .5s ease, filter .3s; filter: brightness(.94) saturate(1.05);
+  background: transparent; }
+/* Yozuv fonи — faqat eng pastki tasma. Avval 55% gacha cho'zilgan edi va
+   plakatning pastki yarmidagi mashinani qoraytirib yuborardi ("yarim chala"
+   ko'rinish sababi). Endi 22% — matn o'qiladi, mashina to'liq ko'rinadi. */
+.card .card-shade { position: absolute; inset: 0; background:
+  linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.45) 12%, transparent 22%);
+  pointer-events: none; }
+.card .card-label { position: absolute; left: 14px; right: 14px; bottom: 10px; font-size: 12px;
+  font-weight: 700; letter-spacing: .5px; color: #eaf0fb;
+  text-shadow: 0 1px 4px rgba(0,0,0,.95), 0 2px 10px rgba(0,0,0,.8);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .card-tag { display: block; font-size: 9px; letter-spacing: 2px; color: #7fffcf;
+  text-transform: uppercase; margin-bottom: 3px; }
+.card:hover { transform: translateY(-6px); border-color: rgba(0,229,160,.5);
+  box-shadow: 0 14px 40px rgba(0,229,160,.25); }
+/* Hover'da rasm KATTALASHTIRILMAYDI — scale(1.08) + overflow:hidden
+   kartochka chetlarini kesib, mashinaning bir qismini yashirardi.
+   Faqat yorqinlik oshadi. */
+.card:hover img { filter: brightness(1.04) saturate(1.15); }
+/* Rasm topilmaganда — chiroyli placeholder (img yo'q, en qo'lda beriladi) */
+.card.no-img { width: 300px; background: linear-gradient(135deg, #0a1a1f 0%, #0f2a24 100%);
+  display: flex; align-items: center; justify-content: center; }
+.card.no-img::before { content: attr(data-name); font-size: 12px; letter-spacing: 2px;
+  color: #4a8b7a; text-transform: uppercase; font-weight: 800; }
+
+.foot { text-align: center; padding: 10px; font-size: 10px; letter-spacing: 3px;
+  color: #2a4a42; text-transform: uppercase; }
+
+/* ── FOYDALANUVCHI TEMASI ────────────────────────────────────────
+   O'z foni tanlangan temada Garage'ga xos bezaklar ko'rinmaydi:
+   "PREMIUM COLLECTION" yorlig'i, "Welcome to the Niex Garage" sarlavhasi,
+   uning tagidagi izoh va mashinalar kolleksiyasi. Bular Garage temasining
+   o'ziga tegishli. Foydalanuvchi o'z fonini qo'yganda faqat qidiruv,
+   tezkor havolalar va toza fon qoladi.
+   Atribut `data-niex-theme="custom"` tema qo'llanganda o'rnatiladi. */
+html[data-niex-theme="custom"] .tagline,
+html[data-niex-theme="custom"] .hero,
+html[data-niex-theme="custom"] .hero-sub,
+html[data-niex-theme="custom"] .rail,
+html[data-niex-theme="custom"] .foot { display: none !important; }
+
+/* Bezaklar olinganda qidiruv o'rtada muvozanatli tursin */
+html[data-niex-theme="custom"] .center { justify-content: center; min-height: 78vh; }
+html[data-niex-theme="custom"] .search-box { margin-top: 0; }
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- SHARED SERVICES — Classic sahifa ishlatgan bir xil motorlar (window.profileService,
+       window.parentControl). UI Garage'da bo'ladi, ma'lumot va logika o'zgarmaydi. -->
+  <script src="./onboarding/profile-service.js"></script>
+  <script src="./parental-control/parent-control-supabase.js"></script>
+</head>
+<body>
+
+<!-- ── FON ─────────────────────────────────────────────── -->
+<!-- Custom background: foydalanuvchi rasm/video tanlashi mumkin. localStorage'da
+     sn_custom_bg = {type:'image'|'video', dataUrl:'...'} saqlanadi. Standart
+     fon assets/garage/garage-bg.mp4. -->
+<div class="bg-wrap">
+  <video class="bg-video" id="bg" autoplay muted loop playsinline
+    src="assets/garage/garage-bg.mp4"></video>
+  <img class="bg-video" id="bg-img" style="display:none;object-fit:cover" alt="" />
+  <div class="bg-tint"></div>
+  <div class="fog"></div>
+  <div class="scanline"></div>
+</div>
+<div class="dust" id="dust"></div>
+
+<!-- ── ASOSIY QATLAM ──────────────────────────────────── -->
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" id="brand-mark" style="background:transparent;padding:0">
+        <img src="assets/brand/niex-logo.png" alt="NIEX"
+             style="width:100%;height:100%;object-fit:contain;display:block"
+             onerror="this.style.display='none'">
+      </div>
+      <div>
+        <span class="brand-name">NIEX</span>
+        <span class="brand-sub">ECOSYSTEM</span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="chip"><span class="dot"></span>AI FAOL</div>
+      <div class="chip" id="chip-blk">🛡️ 0 blok</div>
+      <button class="chip theme-btn" id="theme-btn" title="Temalar" style="position:relative">🎨 <span id="active-theme-label">Themes</span> ▾</button>
+      <button class="chip theme-btn hamb" id="hamb-btn" title="Menyu" aria-label="Menyu">
+        <span class="hamb-icon"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+    <!-- Tema picker dropdown -->
+    <div id="theme-picker" style="display:none;position:absolute;top:60px;right:80px;z-index:250;min-width:260px;max-width:340px;background:linear-gradient(180deg,#0f1a22,#0a1218);border:1px solid rgba(0,229,160,.3);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 30px rgba(0,229,160,.1);padding:12px;font-family:system-ui">
+      <div style="font-size:10px;letter-spacing:3px;color:#7fffcf;text-transform:uppercase;padding:4px 6px 10px;font-weight:800">Temalar</div>
+      <div id="theme-list" style="display:flex;flex-direction:column;gap:4px;max-height:340px;overflow-y:auto"></div>
+      <button id="theme-add-btn" style="margin-top:10px;width:100%;background:rgba(0,229,160,.08);border:1px dashed rgba(0,229,160,.4);color:#7fffcf;border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">+ Yangi tema qo'shish</button>
+      <input type="file" id="theme-file" accept="image/*,video/*" style="display:none" />
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="tagline">◆ PREMIUM COLLECTION ◆</div>
+    <h1 class="hero"><span class="g">Welcome to the</span><br>Niex Garage</h1>
+    <p class="hero-sub">Sun'iy intellekt bilan qo'riqlanadigan xavfsiz brauzer. Qidiruv boshlash uchun quyidagi qatorga yozing.</p>
+
+    <form class="search-box" id="sform" autocomplete="off">
+      <input class="search" id="q" placeholder="Qidiring yoki URL kiriting..." autocomplete="off" spellcheck="false" />
+      <button class="search-btn" type="submit">→ QIDIRISH</button>
+    </form>
+
+    <div class="quick">
+      <div class="q" data-url="https://www.youtube.com/">▶ YouTube</div>
+      <div class="q" data-url="https://www.wikipedia.org/">📖 Wikipedia</div>
+      <div class="q" data-url="https://www.khanacademy.org/">🎓 Khan Academy</div>
+      <div class="q" data-url="https://github.com/">💻 GitHub</div>
+      <div class="q" data-url="https://mail.google.com/">✉ Gmail</div>
+    </div>
+  </div>
+
+  <!-- ── CAR RAIL ─────────────────────────────────────── -->
+  <div class="rail">
+    <div class="rail-title">◆ THE COLLECTION ◆</div>
+    <div class="rail-track" id="rail"></div>
+  </div>
+
+  <div class="foot">◆ NIEX BROWSER · SAFE BY AI ◆</div>
+
+</div>
+
+<!-- ── SIDE MENU (o'ng tomondan chiqadi) ─────────────────── -->
+<div class="menu-backdrop" id="menu-backdrop"></div>
+<aside class="side-menu" id="side-menu" aria-hidden="true">
+  <div class="side-head">
+    <h3>◆ BOSHQARUV ◆</h3>
+    <button class="side-close" id="side-close" aria-label="Yopish">✕</button>
+  </div>
+  <div class="side-user" id="side-user-block" style="cursor:pointer" title="Hisoblar ro'yxatini ochish">
+    <div class="side-avatar" id="side-avatar">?</div>
+    <div class="side-user-info">
+      <div class="side-user-name" id="side-user-name">Mehmon</div>
+      <div class="side-user-email" id="side-user-email">Hisobga kiring</div>
+      <span class="side-user-role" id="side-user-role" style="display:none">USER</span>
+    </div>
+    <div id="side-user-chevron" style="margin-left:auto;color:#7fffcf;font-size:14px;transition:transform .2s">▾</div>
+  </div>
+  <div id="profile-switcher" style="display:none;padding:8px 14px 14px;border-bottom:1px solid rgba(0,229,160,.08)">
+    <div style="font-size:10px;letter-spacing:2px;color:#7fffcf;margin-bottom:8px;text-transform:uppercase">Boshqa hisoblar</div>
+    <div id="profile-list" style="display:flex;flex-direction:column;gap:4px"></div>
+    <button id="profile-add-btn" style="margin-top:10px;width:100%;background:rgba(0,229,160,.08);border:1px dashed rgba(0,229,160,.35);color:#7fffcf;border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">+ Yangi hisob qo'shish</button>
+  </div>
+  <div class="side-items">
+    <button class="side-item" data-act="profile"><span class="side-ic">👤</span>Profil</button>
+    <button class="side-item" data-act="premium"><span class="side-ic">👑</span>Premium</button>
+    <button class="side-item" data-act="parent"><span class="side-ic">👨‍👧</span>Farzandlarni boshqarish</button>
+    <button class="side-item" data-act="focus"><span class="side-ic">🎯</span>Focus Mode</button>
+    <div class="side-divider"></div>
+    <button class="side-item" data-act="settings"><span class="side-ic">⚙️</span>Sozlamalar</button>
+    <button class="side-item" data-act="passwords"><span class="side-ic">🔐</span>Parollar</button>
+    <button class="side-item" data-act="extensions"><span class="side-ic">🧩</span>Extensions</button>
+    <button class="side-item" data-act="links"><span class="side-ic">🔗</span>Tezkor havolalar</button>
+    <button class="side-item" data-act="history"><span class="side-ic">🕑</span>Tarix</button>
+    <div class="side-divider"></div>
+    <button class="side-item" data-act="feedback"><span class="side-ic">💬</span>Fikr-mulohaza</button>
+    <button class="side-item" data-act="notifications"><span class="side-ic">🔔</span>Bildirishnomalar</button>
+    <button class="side-item" data-act="about"><span class="side-ic">ℹ️</span>Niex haqida</button>
+    <div class="side-divider"></div>
+    <button class="side-item danger" data-act="signout"><span class="side-ic">🚪</span>Chiqish</button>
+  </div>
+  <div class="side-foot">NIEX ECOSYSTEM · v1.0</div>
+</aside>
+
+<!-- ── IN-PAGE PANEL MODAL — har panel Garage uslubida native HTML orqali ochiladi.
+     Iframe/Classic YO'Q. Har panelning kontenti "panel-modal-body" ichiga
+     panels[panelId].render() tomonidan renderer qilinadi. ── -->
+<div class="panel-modal" id="panel-modal" aria-hidden="true">
+  <div class="panel-modal-backdrop" id="panel-modal-backdrop"></div>
+  <div class="panel-modal-card">
+    <div class="panel-modal-head">
+      <div class="panel-modal-title" id="panel-modal-title">Panel</div>
+      <button class="panel-modal-close" id="panel-modal-close" title="Yopish" aria-label="Yopish">✕</button>
+    </div>
+    <div class="panel-modal-body" id="panel-modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* ── NIEX THEME SYSTEM
+     Builtin: 'classic' (safenethome.html), 'garage' (default garage-bg.mp4)
+     Custom: sn_themes = [{id, name, bg: {type, dataUrl}}]
+     Active: sn_active_theme = <id>
+     Custom themes = Garage UI + o'z tanlagan orqa foni.
+     Garage default fon: hech qachon o'zgarmaydi — custom themalar alohida saqlanadi. */
+window.NIEX_THEMES = {
+  getBuiltin: function() {
+    return [
+      { id: 'classic', name: 'Classic', builtin: true, kind: 'classic' },
+      { id: 'garage',  name: 'Garage 3D', builtin: true, kind: 'garage' },
+    ];
+  },
+  getCustom: function() {
+    try { var raw = localStorage.getItem('sn_themes'); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+  },
+  getAll: function() {
+    return this.getBuiltin().concat(this.getCustom());
+  },
+  getActiveId: function() {
+    return localStorage.getItem('sn_active_theme') || 'garage';
+  },
+  setActive: function(id) {
+    try { localStorage.setItem('sn_active_theme', id); } catch (e) {}
+  },
+  // src — file:// URL (diskdagi fayl). filePath — o'chirish uchun haqiqiy yo'l.
+  // dataUrl maydoni faqat eski yozuvlar bilan moslik uchun qoldirilgan.
+  addCustom: function(name, bgType, src, filePath) {
+    var custom = this.getCustom();
+    var id = 'custom-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 5);
+    var theme = {
+      id: id,
+      name: name || ('My Theme ' + (custom.length + 1)),
+      bg: { type: bgType, src: src, filePath: filePath || null },
+    };
+    custom.push(theme);
+    try { localStorage.setItem('sn_themes', JSON.stringify(custom)); }
+    catch (e) { return { ok: false, error: e.message }; }
+    return { ok: true, theme: theme };
+  },
+  // Fon manbai — yangi (src) yoki eski (dataUrl) yozuv bo'lishi mumkin
+  bgSrc: function(theme) {
+    if (!theme || !theme.bg) return '';
+    return theme.bg.src || theme.bg.dataUrl || '';
+  },
+  removeCustom: function(id) {
+    var all = this.getCustom();
+    var gone = all.filter(function(t){ return t.id === id; })[0];
+    var custom = all.filter(function(t){ return t.id !== id; });
+    try { localStorage.setItem('sn_themes', JSON.stringify(custom)); } catch (e) {}
+    // Diskdagi fayl ham o'chiriladi (bo'sh joy egallab qolmasin)
+    if (gone && gone.bg && gone.bg.filePath) {
+      var ipcT = window._ipc || window.ipcRenderer;
+      if (ipcT && ipcT.invoke) { try { ipcT.invoke('theme-file-delete', gone.bg.filePath); } catch (e) {} }
+    }
+    // Agar shu theme aktiv bo'lsa — garage'ga qaytamiz
+    if (this.getActiveId() === id) this.setActive('garage');
+  },
+  getById: function(id) {
+    return this.getAll().find(function(t){ return t.id === id; });
+  },
+  // Eski sn_custom_bg'ni migrate qilamiz (backward compat)
+  _migrate: function() {
+    try {
+      var old = localStorage.getItem('sn_custom_bg');
+      if (!old) return;
+      var bg = JSON.parse(old);
+      if (bg && bg.type && bg.dataUrl) {
+        var custom = this.getCustom();
+        // Agar allaqachon o'sha bg custom theme sifatida bor bo'lsa — takrorlamaymiz
+        var exists = custom.some(function(t){ return t.bg && t.bg.dataUrl === bg.dataUrl; });
+        if (!exists) {
+          this.addCustom(bg.name || 'My Theme', bg.type, bg.dataUrl);
+          this.setActive(this.getCustom()[this.getCustom().length - 1].id);
+        }
+      }
+      localStorage.removeItem('sn_custom_bg');
+    } catch (e) {}
+  }
+};
+window.NIEX_THEMES._migrate();
+
+/* Aktiv theme'ning orqa fonini qo'llash */
+(function applyActiveTheme(){
+  try {
+    var activeId = window.NIEX_THEMES.getActiveId();
+    // Agar Classic aktiv bo'lsa — safenethome.html ga o'tamiz
+    if (activeId === 'classic') {
+      location.replace('safenethome.html');
+      return;
+    }
+    var theme = window.NIEX_THEMES.getById(activeId);
+    if (!theme || theme.kind === 'garage' || !theme.bg) return; // default garage bg qoladi
+
+    // ── Foydalanuvchi temasi: Garage'ga xos bezaklar OLIB TASHLANADI ──
+    // "Welcome to the Niex Garage" sarlavhasi va mashinalar kolleksiyasi
+    // faqat Garage temasiga tegishli. O'z foni tanlangan temada ular ortiqcha —
+    // foydalanuvchi toza fon va qidiruvni ko'rishi kerak.
+    document.documentElement.setAttribute('data-niex-theme', 'custom');
+
+    var videoEl = document.getElementById('bg');
+    var imgEl = document.getElementById('bg-img');
+    var src = window.NIEX_THEMES.bgSrc(theme);
+    if (!src) return;
+
+    if (theme.bg.type === 'image' && imgEl) {
+      if (videoEl) { videoEl.pause(); videoEl.style.display = 'none'; videoEl.removeAttribute('src'); videoEl.load(); }
+      imgEl.src = src;
+      imgEl.style.display = 'block';
+    } else if (theme.bg.type === 'video' && videoEl) {
+      if (imgEl) imgEl.style.display = 'none';
+      videoEl.src = src;
+      videoEl.style.display = '';
+      videoEl.playbackRate = 1;
+      videoEl.muted = true;          // autoplay uchun shart
+      videoEl.loop = true;
+      videoEl.addEventListener('error', function () {
+        console.warn('[theme] video yuklanmadi:', src);
+      });
+      // Ba'zan birinchi play() foydalanuvchi harakatisiz rad etiladi —
+      // canplay hodisasida qayta urinamiz.
+      var tryPlay = function () { try { videoEl.play().catch(function(){}); } catch (e) {} };
+      videoEl.addEventListener('canplay', tryPlay, { once: true });
+      videoEl.load();
+      tryPlay();
+    }
+  } catch(e) { console.warn('[theme] apply failed:', e); }
+})();
+
+/* Standart garage fon sekinlashtirish */
+const video = document.getElementById('bg');
+if (video) {
+  var activeId = window.NIEX_THEMES.getActiveId();
+  var isDefault = activeId === 'garage';
+  if (isDefault) {
+    video.addEventListener('loadedmetadata', () => { video.playbackRate = 0.35; });
+    video.addEventListener('play', () => { video.playbackRate = 0.35; });
+  }
+}
+
+/* ── QIDIRUV ── */
+document.getElementById('sform').addEventListener('submit', e => {
+  e.preventDefault();
+  let q = document.getElementById('q').value.trim();
+  if (!q) return;
+  if (!/^https?:\/\//i.test(q)) {
+    q = /^[\w.-]+\.\w{2,}(\/|$)/.test(q) ? 'https://' + q : 'https://duckduckgo.com/?q=' + encodeURIComponent(q);
+  }
+  // Toolbar navigate: yangi tab yoki hozirgi tab
+  if (window._ipc && window._ipc.send) window._ipc.send('navigate', q);
+  else location.href = q;
+});
+document.querySelectorAll('.q').forEach(el => el.addEventListener('click', () => {
+  const url = el.dataset.url;
+  if (window._ipc && window._ipc.send) window._ipc.send('navigate', url);
+  else location.href = url;
+}));
+
+/* ── CAR RAIL — assets/garage/cars/ dan yuklaymiz.
+   Rasm bo'lsa — chiroyli card, bo'lmasa — placeholder (yolg'on emas). ── */
+const CARS = [
+  // ── Supercars & GT ──
+  { file: 'aston martin.jpg',              name: 'Aston Martin Vantage GT3', tag: 'GT3 · Racing Green' },
+  { file: 'audi.jpg',                      name: 'Audi R8 LMS GT3',          tag: 'V10 · Endurance' },
+  { file: 'car2.webp',                     name: 'Koenigsegg Jesko',         tag: 'Hypercar · Carbon & Gold' },
+  { file: 'car5.jpg',                      name: 'BMW M4 GT3',               tag: '#25 · M Motorsport' },
+  { file: 'car7.jpg',                      name: 'Bugatti Chiron Noir',      tag: 'W16 · Édition Noire' },
+  { file: 'ferari.jpg',                    name: 'Ferrari 296 GT3',          tag: 'Cavallino · Nero' },
+  { file: 'mclaren.jpg',                   name: 'McLaren Senna',            tag: 'Hypercar · Ride of Dreams' },
+  { file: 'nissan.jpg',                    name: 'Nissan GT-R NISMO',        tag: 'R35 · Godzilla' },
+  { file: 'pagani.jpg',                    name: 'Pagani Huayra',            tag: '6.0L V12 · 850 HP' },
+
+  // ── JDM & Legends ──
+  { file: 'photo_2026-07-28_17-22-38.jpg', name: 'BMW M3 GTR',               tag: 'E46 · Most Wanted' },
+  { file: 'photo_2026-07-28_17-22-40.jpg', name: 'BMW M4 CS',                tag: 'Competition Sport' },
+  { file: 'photo_2026-07-28_17-22-41.jpg', name: 'Mazda RX-7 FD',            tag: 'Rotary · Sakura Edition' },
+  { file: 'photo_2026-07-28_17-22-43.jpg', name: 'Toyota Supra MK4',         tag: 'JZA80 · 2JZ Legend' },
+  { file: 'photo_2026-07-28_17-22-44.jpg', name: 'Nissan Silvia S14',        tag: 'SR20DET · Drift King' },
+  { file: 'photo_2026-07-28_17-22-45.jpg', name: 'Ferrari F40',              tag: 'Twin-Turbo V8 · Icon' },
+  { file: 'photo_2026-07-28_17-22-47.jpg', name: 'Nissan GT-R',              tag: 'R35 · Pearl White' },
+  { file: 'photo_2026-07-28_17-22-48.jpg', name: 'Porsche 911 GT3 RS',       tag: '992 · Track Focus' },
+
+  // ── BMW M Collection ──
+  { file: 'photo_2026-07-28_17-22-49.jpg', name: 'BMW M4 GT3 EVO',           tag: 'M Motorsport · Ice Blue' },
+  { file: 'photo_2026-07-28_17-22-51.jpg', name: 'BMW M3 G80',               tag: 'Isle of Man Green' },
+  { file: 'photo_2026-07-28_17-22-52.jpg', name: 'BMW M5 F90',               tag: 'Marina Bay Blue · V8' },
+  { file: 'photo_2026-07-28_17-22-53.jpg', name: 'BMW M3 E30',               tag: 'Classic · Motorsport Icon' },
+  { file: 'photo_2026-07-28_17-22-55.jpg', name: 'BMW M1',                   tag: 'Procar · 1978 Legend' },
+  { file: 'photo_2026-07-28_17-22-56.jpg', name: 'BMW M8 Competition',       tag: 'Twin-Turbo V8 · 625 HP' },
+
+  // ── Superbikes ──
+  { file: 'bmw rr.jpg',                    name: 'BMW M 1000 RR',            tag: 'M Power · 314 km/h' },
+  { file: 'ducatt.jpg',                    name: 'Ducati Panigale',          tag: '1103cc · 299 km/h' },
+  { file: 'kawasaki ninja h2.jpg',         name: 'Kawasaki Ninja H2',        tag: 'Supercharged · 322 km/h' },
+  { file: 'photo_2026-07-28_17-22-26.jpg', name: 'Kawasaki Ninja H2',        tag: '998cc · Supercharged' },
+  { file: 'photo_2026-07-28_17-22-28.jpg', name: 'Yamaha YZF-R1',            tag: 'Crossplane · 299 km/h' },
+  { file: 'photo_2026-07-28_17-22-29.jpg', name: 'BMW S1000RR',              tag: 'M Performance · 303 km/h' },
+  { file: 'photo_2026-07-28_17-22-31.jpg', name: 'Ducati Panigale V4',       tag: '1103cc · 320 km/h' },
+  { file: 'photo_2026-07-28_17-22-32.jpg', name: 'Suzuki GSX-R 1000R',       tag: 'Born on the Track' },
+  { file: 'photo_2026-07-28_17-22-58.jpg', name: 'Devil Putra 2000',         tag: '2000cc · Custom Build' },
+  { file: 'photo_2026-07-28_17-23-00.jpg', name: 'Bajaj Pulsar RS200',       tag: '199.5cc · Built to Thrill' },
+  { file: 'photo_2026-07-28_17-23-05.jpg', name: 'Honda CBR1000RR-R',        tag: 'Fireblade SP · HRC' },
+  { file: 'photo_2026-07-28_17-23-12.jpg', name: 'Kawasaki Ninja H2',        tag: 'Candy Red · Superbike' },
+  { file: 'photo_2026-07-28_17-23-21.jpg', name: 'Yamaha YZF R1',            tag: 'Carbon · MotoGP DNA' },
+  { file: 'photo_2026-07-28_17-23-23.jpg', name: 'Ducati Panigale V2',       tag: 'Italian Superbike' },
+  { file: 'photo_2026-07-28_17-23-27.jpg', name: 'BMW S1000RR',              tag: 'Motorsport Livery' },
+  { file: 'photo_2026-07-28_17-23-28.jpg', name: 'Ducati Panigale V4R',      tag: 'Racing Homologation' },
+];
+const rail = document.getElementById('rail');
+function makeCard(car) {
+  const d = document.createElement('div');
+  d.className = 'card';
+  d.dataset.name = car.name;
+  const img = new Image();
+  img.onerror = () => { d.classList.add('no-img'); img.remove(); };
+  img.src = 'assets/garage/cars/' + car.file;
+  d.appendChild(img);
+  const shade = document.createElement('div'); shade.className = 'card-shade'; d.appendChild(shade);
+  const lbl = document.createElement('div'); lbl.className = 'card-label';
+  lbl.innerHTML = '<span class="card-tag">' + car.tag + '</span>' + car.name;
+  d.appendChild(lbl);
+  return d;
+}
+// Ikki marta — cheksiz sirg'anish uchun
+[...CARS, ...CARS].forEach(car => rail.appendChild(makeCard(car)));
+
+/* ── DUST PARTICLES ── */
+const dust = document.getElementById('dust');
+for (let i = 0; i < 40; i++) {
+  const s = document.createElement('span');
+  s.style.left = Math.random() * 100 + '%';
+  s.style.animationDelay = (Math.random() * 18) + 's';
+  s.style.animationDuration = (14 + Math.random() * 10) + 's';
+  s.style.opacity = String(0.15 + Math.random() * 0.35);
+  dust.appendChild(s);
+}
+
+/* ── PARALLAX (subtle — chalg'itmasin) ── */
+let mx = 0, my = 0, cx = 0, cy = 0;
+window.addEventListener('mousemove', e => {
+  mx = (e.clientX / window.innerWidth  - 0.5);
+  my = (e.clientY / window.innerHeight - 0.5);
+});
+function loop() {
+  cx += (mx - cx) * 0.05;
+  cy += (my - cy) * 0.05;
+  const bg = document.querySelector('.bg-video');
+  if (bg) bg.style.transform =
+    `translate(calc(-50% + ${cx * -14}px), calc(-50% + ${cy * -10}px)) scale(1.08)`;
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* ── BLOK STATISTIKA (agar toolbar berса) ── */
+if (window._ipc && window._ipc.on) {
+  window._ipc.on('stats-update', (_, s) => {
+    const el = document.getElementById('chip-blk');
+    if (el && s) el.textContent = '🛡️ ' + (s.block || 0) + ' blok';
+  });
+}
+
+/* ── TEMA PICKER: Classic | Garage | [custom themes...] | + Yangi ── */
+try { (function initThemePicker(){
+  // Local esc (boshqa IIFE'lardan alohida — scope crash oldini oladi)
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  var btn = document.getElementById('theme-btn');
+  var picker = document.getElementById('theme-picker');
+  var listEl = document.getElementById('theme-list');
+  var addBtn = document.getElementById('theme-add-btn');
+  var fileInp = document.getElementById('theme-file');
+  var label = document.getElementById('active-theme-label');
+  if (!btn || !picker || !listEl) return;
+
+  function renderList() {
+    if (!window.NIEX_THEMES) { console.warn('[theme-picker] NIEX_THEMES yo\'q'); return; }
+    var all = window.NIEX_THEMES.getAll();
+    var activeId = window.NIEX_THEMES.getActiveId();
+    var active = window.NIEX_THEMES.getById(activeId);
+    if (label) label.textContent = active ? active.name : 'Garage';
+
+    listEl.innerHTML = all.map(function(t){
+      var isActive = t.id === activeId;
+      var preview = '';
+      if (t.builtin && t.kind === 'garage') preview = '🚗';
+      else if (t.builtin && t.kind === 'classic') preview = '🎨';
+      else if (t.bg && t.bg.type === 'image') preview = '🖼️';
+      else if (t.bg && t.bg.type === 'video') preview = '🎬';
+      else preview = '✨';
+      return '<div class="theme-item" data-id="' + esc(t.id) + '" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;' +
+        (isActive ? 'background:rgba(0,229,160,.15);border:1px solid rgba(0,229,160,.35)' : 'background:rgba(255,255,255,.03);border:1px solid transparent') +
+        ';transition:background .15s">' +
+        '<div style="width:36px;height:36px;border-radius:8px;background:rgba(0,229,160,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' + preview + '</div>' +
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#eaf0fb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.name) + '</div>' +
+        '<div style="font-size:10px;color:#6b8a80">' + (t.builtin ? 'Standart tema' : (t.bg && t.bg.type === 'video' ? 'Custom video' : 'Custom rasm')) + '</div></div>' +
+        (isActive ? '<span style="color:#00E5A0;font-size:14px;flex-shrink:0">✓</span>' : '') +
+        (t.builtin ? '' : '<button class="theme-rm" data-rm="' + esc(t.id) + '" title="O\'chirish" style="background:transparent;border:none;color:#6b7a99;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:12px;flex-shrink:0">✕</button>') +
+        '</div>';
+    }).join('');
+
+    listEl.querySelectorAll('.theme-item').forEach(function(row){
+      row.addEventListener('click', function(e){
+        if (e.target.closest('.theme-rm')) return;
+        var id = row.dataset.id;
+        var t = window.NIEX_THEMES.getById(id);
+        window.NIEX_THEMES.setActive(id);
+        picker.style.display = 'none';
+        // Classic yoki boshqa themaga o'tish → sahifani qayta yuklash
+        if (id === 'classic') location.replace('safenethome.html');
+        else location.reload();
+      });
+    });
+    listEl.querySelectorAll('.theme-rm').forEach(function(rm){
+      rm.addEventListener('click', function(e){
+        e.stopPropagation();
+        var id = rm.dataset.rm;
+        if (!confirm('Ushbu temani o\'chirmoqchimisiz?')) return;
+        window.NIEX_THEMES.removeCustom(id);
+        renderList();
+      });
+    });
+  }
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = picker.style.display === 'block';
+    picker.style.display = open ? 'none' : 'block';
+    if (!open) renderList();
+  });
+  document.addEventListener('click', function(e){
+    if (!picker.contains(e.target) && e.target !== btn && !btn.contains(e.target)) picker.style.display = 'none';
+  });
+
+  addBtn.addEventListener('click', function(){ fileInp.click(); });
+  fileInp.addEventListener('change', function(e){
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    // Fayl DISKKA saqlanadi (localStorage emas) — katta videolar ham bemalol.
+    var MAX = 50 * 1024 * 1024;
+    if (f.size > MAX) { alert('Fayl 50 MB dan kichik bo\'lsin (hozir ' + Math.round(f.size / 1024 / 1024) + ' MB)'); fileInp.value = ''; return; }
+    var isImage = /^image\//.test(f.type);
+    var isVideo = /^video\//.test(f.type);
+    if (!isImage && !isVideo) { alert('Faqat rasm yoki video fayl'); fileInp.value = ''; return; }
+
+    // DIQQAT: bu yerda window.prompt() ISHLATILMAYDI — Electron renderer'da u
+    // qo'llab-quvvatlanmaydi va null qaytaradi. Ilgari shu sabab tema
+    // qo'shish jimgina to'xtab qolardi (xato ham chiqmasdi).
+    // Nom fayl nomidan olinadi; keyin tema ro'yxatidan o'zgartirish mumkin.
+    var name = f.name.replace(/\.[^.]+$/, '') || 'My Theme';
+
+    var ipcT = window._ipc || window.ipcRenderer;
+    if (!ipcT || !ipcT.invoke) { alert('Ichki ulanish yo\'q — brauzerni qayta ishga tushiring'); fileInp.value = ''; return; }
+
+    addBtn.textContent = '⏳ Saqlanmoqda...';
+    addBtn.disabled = true;
+
+    f.arrayBuffer().then(function(buf){
+      var ext = (f.name.match(/\.([^.]+)$/) || [, 'bin'])[1];
+      return ipcT.invoke('theme-file-save', { data: new Uint8Array(buf), ext: ext });
+    }).then(function(res){
+      addBtn.textContent = '+ Yangi tema qo\'shish';
+      addBtn.disabled = false;
+      fileInp.value = '';
+      if (!res || !res.ok) { alert('Saqlanmadi: ' + ((res && res.error) || 'noma\'lum xato')); return; }
+      var r = window.NIEX_THEMES.addCustom(name || f.name, isImage ? 'image' : 'video', res.url, res.path);
+      if (r.ok) {
+        window.NIEX_THEMES.setActive(r.theme.id);
+        picker.style.display = 'none';
+        location.reload();
+      } else {
+        alert('Xato: ' + (r.error || 'saqlanmadi'));
+      }
+    }).catch(function(err){
+      addBtn.textContent = '+ Yangi tema qo\'shish';
+      addBtn.disabled = false;
+      fileInp.value = '';
+      alert('Fayl o\'qishda xato: ' + (err && err.message ? err.message : err));
+    });
+  });
+
+  // Boshlang'ich label
+  renderList();
+})(); } catch(e) { console.error('[theme-picker] init failed (side-menu still works):', e); }
+
+/* ── LOGO — assets/brand/niex-logo.png bo'lsa emoji o'rniga rasm ko'rsatiladi.
+   Rasm topilmasa — 🛡️ emoji qoladi (chiroyli placeholder). Foydalanuvchi
+   rasmni saqlaganda avtomatik faollashadi (kod o'zgartirish shart emas). */
+(function () {
+  var mark = document.getElementById('brand-mark');
+  if (!mark) return;
+  var img = new Image();
+  img.onload = function () { mark.innerHTML = ''; mark.appendChild(img); mark.style.background = 'transparent'; mark.style.boxShadow = '0 0 20px rgba(0,229,160,.4)'; };
+  img.onerror = function () { /* emoji qoladi */ };
+  img.alt = 'Niex';
+  img.src = 'assets/brand/niex-logo.png';
+})();
+
+/* ── SIDE MENU — profil, sozlamalar, feedback va h.k. ─── */
+(function () {
+  var hamb = document.getElementById('hamb-btn');
+  var menu = document.getElementById('side-menu');
+  var bd = document.getElementById('menu-backdrop');
+  var close = document.getElementById('side-close');
+
+  function openMenu() {
+    menu.classList.add('open'); bd.classList.add('open'); hamb.classList.add('open');
+    menu.setAttribute('aria-hidden', 'false');
+    fillUser();
+    refreshProfiles();
+  }
+  function closeMenu() {
+    menu.classList.remove('open'); bd.classList.remove('open'); hamb.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    // Profil switcher yopiladi
+    var sw = document.getElementById('profile-switcher');
+    var ch = document.getElementById('side-user-chevron');
+    if (sw) sw.style.display = 'none';
+    if (ch) ch.style.transform = '';
+  }
+
+  // ── PROFILE SWITCHER (Chrome-style multi-account) ──
+  var profSvc = window.safenet_profiles;
+  var switcher = document.getElementById('profile-switcher');
+  var switcherList = document.getElementById('profile-list');
+  var switcherAddBtn = document.getElementById('profile-add-btn');
+  var userBlock = document.getElementById('side-user-block');
+  var userChevron = document.getElementById('side-user-chevron');
+
+  function refreshProfiles() {
+    if (!profSvc || !switcherList) return;
+    Promise.all([profSvc.list(), profSvc.current()]).then(function (r) {
+      var all = Array.isArray(r[0]) ? r[0] : [];
+      var currentId = r[1] && r[1].currentId;
+      var current = r[1] && r[1].current;
+
+      // Joriy profilni user info blokida ko'rsatamiz (agar Firebase user yo'q bo'lsa)
+      var authUser = null;
+      try { authUser = JSON.parse(localStorage.getItem('sn_user') || 'null'); } catch (e) {}
+      if (!authUser && current) {
+        var nameEl = document.getElementById('side-user-name');
+        var emailEl = document.getElementById('side-user-email');
+        if (nameEl) nameEl.textContent = current.name || 'Profil';
+        if (emailEl) emailEl.textContent = current.email || 'Kirish talab qilinmagan';
+      }
+
+      // Boshqa profillarni ro'yxatga chizamiz
+      var others = all.filter(function (p) { return p.id !== currentId; });
+      if (others.length === 0) {
+        switcherList.innerHTML = '<div style="color:#4a5c6b;font-size:11px;padding:8px 0;text-align:center">Boshqa profillar yo\'q</div>';
+      } else {
+        switcherList.innerHTML = others.map(function (p) {
+          var initial = ((p.name || p.email || '?').charAt(0) || '?').toUpperCase();
+          var colorBg = p.color || '#5B8FF9';
+          return '<div class="prof-item" data-id="' + p.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'rgba(255,255,255,.06)\'" onmouseout="this.style.background=\'\'">'
+            + '<div style="width:36px;height:36px;border-radius:50%;background:' + colorBg + ';display:flex;align-items:center;justify-content:center;color:#0A0E1A;font-weight:800;font-size:15px;flex-shrink:0">' + initial + '</div>'
+            + '<div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:#eaf0fb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (p.name || 'Profil') + '</div>'
+            + '<div style="font-size:10px;color:#6b8a80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (p.email || 'Kirmagan') + '</div></div>'
+            + (p.isDefault ? '' : '<button class="prof-rm" data-rm="' + p.id + '" title="O\'chirish" style="background:transparent;border:none;color:#6b8a80;font-size:14px;cursor:pointer;padding:4px 6px;border-radius:6px" onclick="event.stopPropagation();">✕</button>')
+            + '</div>';
+        }).join('');
+        // Click → shu profil bilan yangi oyna
+        Array.prototype.forEach.call(switcherList.querySelectorAll('.prof-item'), function (row) {
+          row.addEventListener('click', function () {
+            var id = row.dataset.id;
+            profSvc.launch(id).then(function (rr) {
+              if (rr && !rr.ok && rr.error) alert('Xato: ' + rr.error);
+            });
+          });
+        });
+        Array.prototype.forEach.call(switcherList.querySelectorAll('.prof-rm'), function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var id = btn.dataset.rm;
+            if (!confirm('Profil o\'chirilsinmi? (Uning ma\'lumotlari saqlangan holda qoladi, faqat ro\'yxatdan olib tashlanadi.)')) return;
+            profSvc.remove(id).then(function (rr) {
+              if (rr && rr.ok) refreshProfiles();
+              else if (rr && rr.error) alert('Xato: ' + rr.error);
+            });
+          });
+        });
+      }
+    }).catch(function (e) { console.warn('[profiles] refresh failed', e); });
+  }
+
+  if (userBlock) {
+    userBlock.addEventListener('click', function () {
+      if (!switcher) return;
+      var open = switcher.style.display === 'block';
+      switcher.style.display = open ? 'none' : 'block';
+      if (userChevron) userChevron.style.transform = open ? '' : 'rotate(180deg)';
+      if (!open) refreshProfiles();
+    });
+  }
+  // Chrome-style "Add account" dialog:
+  //   Google bilan davom eting (OAuth — Google sahifasida haqiqiy kirish)
+  //   YOKI Email/parol bilan mahalliy NIEX hisob (Google emas — Firebase/lokal)
+  //
+  // MUHIM: Haqiqiy Google hisobga parolini BEVOSITA tekshirib bo'lmaydi (Google
+  // OAuth majburiy). Manual email/parol kiritilsa NIEX'ning o'z hisobiga aylanadi.
+  function showAddAccountDialog(handlers) {
+    var backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(3,5,7,.75);backdrop-filter:blur(6px);z-index:200000;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;padding:20px';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:linear-gradient(180deg,#0f1a22,#0a1218);border:1px solid rgba(0,229,160,.35);border-radius:18px;padding:28px 28px 24px;width:400px;max-width:100%;box-shadow:0 24px 70px rgba(0,0,0,.7),0 0 40px rgba(0,229,160,.12);max-height:90vh;overflow-y:auto';
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">' +
+      '  <div>' +
+      '    <div style="font-size:11px;letter-spacing:3px;color:#7fffcf;text-transform:uppercase">Hisob qo\'shish</div>' +
+      '    <div style="font-size:20px;font-weight:800;color:#eaf0fb;margin-top:4px">Yangi hisob</div>' +
+      '  </div>' +
+      '  <button id="aa-close" style="background:transparent;border:none;color:#6b8a80;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:8px" title="Yopish">✕</button>' +
+      '</div>' +
+
+      '<div style="font-size:12px;color:#a5b1c8;line-height:1.55;margin-bottom:20px">Chrome kabi bir necha hisobga kirishingiz mumkin. Har profil o\'z alohida oynasi (cookies, tarix, sozlamalar) bilan ishlaydi.</div>' +
+
+      // Google OAuth option
+      '<button id="aa-google" style="width:100%;background:#fff;border:none;border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;color:#3c4043;font-family:inherit;transition:transform .1s">' +
+      '  <span style="font-size:18px">🇬</span><span>Google bilan davom eting</span>' +
+      '</button>' +
+      '<div style="font-size:10px;color:#6b8a80;text-align:center;margin-top:6px;line-height:1.4">Google sahifasida parolingizni haqiqiy tekshiradi</div>' +
+
+      // Divider
+      '<div style="display:flex;align-items:center;gap:12px;margin:22px 0 16px"><div style="flex:1;height:1px;background:rgba(255,255,255,.08)"></div><div style="font-size:10px;color:#4a5c6b;letter-spacing:2px;text-transform:uppercase">yoki</div><div style="flex:1;height:1px;background:rgba(255,255,255,.08)"></div></div>' +
+
+      // Email/password option
+      '<div style="font-size:11px;color:#a5b1c8;margin-bottom:8px;line-height:1.5">Email/parol bilan NIEX ichki hisob (Google emas):</div>' +
+      '<input id="aa-email" type="email" placeholder="email@example.com" style="width:100%;background:#0a1218;border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:11px 14px;color:#eaf0fb;font-size:13px;outline:none;font-family:inherit;margin-bottom:8px" />' +
+      '<input id="aa-pass" type="password" placeholder="Parol (kamida 6 belgi)" style="width:100%;background:#0a1218;border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:11px 14px;color:#eaf0fb;font-size:13px;outline:none;font-family:inherit;margin-bottom:12px" />' +
+      '<button id="aa-email-btn" style="width:100%;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);color:#7fffcf;border-radius:10px;padding:11px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">📧 NIEX hisob yaratish / kirish</button>' +
+      '<div id="aa-status" style="margin-top:12px;font-size:11px;min-height:14px;text-align:center"></div>' +
+
+      '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:#4a5c6b;line-height:1.5">💡 Manual Google parolini kiritish uchun "Google bilan davom eting" ni tanlang. Google xavfsizlik siyosati parolni faqat o\'z sahifasida qabul qiladi.</div>';
+
+    backdrop.appendChild(box);
+    document.body.appendChild(backdrop);
+
+    var status = box.querySelector('#aa-status');
+    function setStatus(msg, color) { status.textContent = msg; status.style.color = color || '#a5b1c8'; }
+    function close() { try { backdrop.remove(); } catch(e){} }
+
+    box.querySelector('#aa-close').addEventListener('click', close);
+    backdrop.addEventListener('click', function(e){ if (e.target === backdrop) close(); });
+
+    box.querySelector('#aa-google').addEventListener('click', function () {
+      setStatus('⌛ Google oynasini kuting...', '#7fffcf');
+      if (handlers && handlers.onGoogle) {
+        handlers.onGoogle().then(function(){ close(); }).catch(function(e){
+          setStatus('❌ ' + (e.message || e), '#ff8a98');
+        });
+      }
+    });
+
+    box.querySelector('#aa-email-btn').addEventListener('click', function () {
+      var email = (box.querySelector('#aa-email').value || '').trim().toLowerCase();
+      var pass = box.querySelector('#aa-pass').value;
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) { setStatus('❌ To\'g\'ri email kiriting', '#ff8a98'); return; }
+      if (!pass || pass.length < 6) { setStatus('❌ Parol kamida 6 belgi bo\'lsin', '#ff8a98'); return; }
+      setStatus('⌛ Kirilmoqda...', '#7fffcf');
+      if (handlers && handlers.onEmail) {
+        handlers.onEmail(email, pass).then(function(){ close(); }).catch(function(e){
+          setStatus('❌ ' + (e.message || e), '#ff8a98');
+        });
+      }
+    });
+
+    box.querySelector('#aa-email').focus();
+  }
+
+  // Chrome-style "+ Add account" — OAuth avval, keyin profil yaratamiz.
+  //   Foydalanuvchi: 1 marta bosadi → Google hisob tanlaydi → yangi profil
+  //   Chrome dagi kabi hisob ma'lumoti (email, ism, avatar) bilan yaratiladi
+  //   va shu hisobda avtomatik ochilgan yangi oyna paydo bo'ladi.
+  // Yordamchi: hisob ma'lumotidan yangi profil yaratib yangi oyna ochish
+  async function createProfileAndLaunch(email, name, avatar) {
+    if (!profSvc) throw new Error('Profile bridge yo\'q');
+    const existing = await profSvc.list();
+    let target = existing.find(function (p) { return p.email && p.email.toLowerCase() === email.toLowerCase(); });
+    if (!target) {
+      const addRes = await profSvc.add({ name: name || email.split('@')[0] });
+      if (!addRes || !addRes.ok) throw new Error(addRes?.error || 'Profil yaratilmadi');
+      target = addRes.profile;
+      await profSvc.update(target.id, { name: name || email, email: email, avatar: avatar || null });
+    }
+    refreshProfiles();
+    const launchRes = await profSvc.launch(target.id);
+    if (launchRes && !launchRes.ok && launchRes.error) throw new Error(launchRes.error);
+    return target;
+  }
+
+  if (switcherAddBtn) {
+    switcherAddBtn.addEventListener('click', function () {
+      if (!profSvc) { alert('Profile bridge yuklanmagan. Brauzerni to\'liq qayta ishga tushiring.'); return; }
+      showAddAccountDialog({
+        // Google OAuth — haqiqiy Google sahifasida parol tekshiriladi
+        onGoogle: async function () {
+          if (!window.safenet || !window.safenet.signInGoogle) throw new Error('Auth bridge yo\'q');
+          const result = await window.safenet.signInGoogle();
+          if (!result || !result.ok) throw new Error(result?.error || 'OAuth bekor qilindi');
+          const profile = result.profile;
+          if (!profile || !profile.email) throw new Error('Google profil ma\'lumoti kelmadi');
+          await createProfileAndLaunch(profile.email, profile.name, profile.picture);
+        },
+        // Email/parol — NIEX ichki hisob (Firebase yoki mahalliy)
+        onEmail: async function (email, pass) {
+          // Firebase email/password birinchi
+          if (window.firebase && window.firebase.auth) {
+            try {
+              // Mavjud hisobga kirishga urinamiz
+              try {
+                await window.firebase.auth().signInWithEmailAndPassword(email, pass);
+              } catch (signInErr) {
+                // Yo'q bo'lsa, yangisini yaratamiz
+                if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-login-credentials') {
+                  await window.firebase.auth().createUserWithEmailAndPassword(email, pass);
+                } else if (signInErr.code === 'auth/wrong-password') {
+                  throw new Error('Parol noto\'g\'ri (bu email allaqachon mavjud)');
+                } else if (signInErr.code === 'auth/operation-not-allowed') {
+                  throw new Error('Firebase email/parol yoqilmagan. Google bilan urinib ko\'ring.');
+                } else {
+                  throw signInErr;
+                }
+              }
+              await createProfileAndLaunch(email, email.split('@')[0], null);
+              return;
+            } catch (fbErr) {
+              // Firebase muvaffaqiyatsiz — mahalliy hisobga o'tamiz
+              console.warn('[email-auth] Firebase failed, falling back to local:', fbErr.message);
+              if (fbErr.message && fbErr.message.includes('Parol noto\'g\'ri')) throw fbErr;
+            }
+          }
+          // Mahalliy sn_accounts (localStorage) — Firebase mavjud bo'lmasa
+          const accounts = JSON.parse(localStorage.getItem('sn_accounts') || '{}');
+          if (accounts[email] && accounts[email].pass !== pass) {
+            throw new Error('Parol noto\'g\'ri');
+          }
+          if (!accounts[email]) {
+            accounts[email] = { pass: pass, createdAt: new Date().toISOString() };
+            localStorage.setItem('sn_accounts', JSON.stringify(accounts));
+          }
+          await createProfileAndLaunch(email, email.split('@')[0], null);
+        },
+      });
+    });
+  }
+
+  // ── AUTO SIGN-IN from profile record ──
+  //   Yangi profil oynasi ochilganda: agar localStorage bo'sh (yangi userData) va
+  //   profile record'da email bo'lsa (+ tugmasi orqali OAuth bo'lgan hisobning
+  //   ma'lumoti profil kartochkasida saqlangan) — biz sn_user'ni shu profil
+  //   ma'lumotidan avtomatik quramiz. Foydalanuvchi qayta login qilishi kerak emas.
+  (function autoSignInFromProfile() {
+    if (!profSvc) return;
+    try {
+      const existing = localStorage.getItem('sn_user');
+      if (existing && existing !== 'null') return; // allaqachon kirilgan
+    } catch (e) { return; }
+    profSvc.current().then(function (cur) {
+      if (!cur || !cur.current) return;
+      const p = cur.current;
+      if (!p.email) return; // profil da hali email yo'q — foydalanuvchi kirmagan
+      const sn = { name: p.name || p.email, email: p.email, uid: p.email, avatar: p.avatar || null, provider: 'google' };
+      try {
+        localStorage.setItem('sn_user', JSON.stringify(sn));
+        window.currentFirebaseUser = sn;
+        try { window._ipc?.send('account-set', p.email); } catch (e) {}
+        if (typeof fillUser === 'function') fillUser();
+        if (typeof refreshProfiles === 'function') refreshProfiles();
+      } catch (e) {}
+    }).catch(function(){});
+  })();
+  hamb.addEventListener('click', function (e) { e.stopPropagation(); menu.classList.contains('open') ? closeMenu() : openMenu(); });
+  close.addEventListener('click', closeMenu);
+  bd.addEventListener('click', closeMenu);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+
+  /* User ma'lumotini localStorage'дан olamiz (Classic va Firebase shu yerga yozadi). */
+  function fillUser() {
+    var user = null, profile = null;
+    // 'sn_user' — Firebase/Classic ishlatadigan haqiqiy kalit. Eski 'sn_u' hech qachon yozilmaydi.
+    try { user = JSON.parse(localStorage.getItem('sn_user') || 'null'); } catch (e) {}
+    try { profile = JSON.parse(localStorage.getItem('sn_user_profile') || 'null'); } catch (e) {}
+    var firstLast = profile ? ((profile.firstName || '') + ' ' + (profile.lastName || '')).trim() : '';
+    var name = firstLast || (profile && profile.name) || (user && (user.name || user.displayName)) || 'Mehmon';
+    var email = (profile && profile.email) || (user && user.email) || 'Hisobga kiring';
+    var role = profile && (profile.role || (profile.personalInfo && profile.personalInfo.role));
+    document.getElementById('side-avatar').textContent = (name[0] || '?').toUpperCase();
+    document.getElementById('side-user-name').textContent = name;
+    document.getElementById('side-user-email').textContent = email;
+    var roleEl = document.getElementById('side-user-role');
+    if (role) { roleEl.textContent = role; roleEl.style.display = 'inline-block'; }
+    else roleEl.style.display = 'none';
+  }
+
+  /* Menu amallari — har panel Garage uslubida native modal ichida ochiladi.
+     Classic sahifaga o'tmaydi, iframe yo'q. Panel'ning aniq HTML/logikasi
+     PANELS registrida (skript pastida) e'lon qilingan. */
+  function openPanel(id) {
+    if (typeof window.openInPagePanel === 'function') window.openInPagePanel(id);
+  }
+
+  var ACTIONS = {
+    premium:       function () { if (window._ipc && window._ipc.send) window._ipc.send('open-premium'); },
+    profile:       function () { openPanel('profile'); },
+    settings:      function () { openPanel('settings'); },
+    extensions:    function () { openPanel('extensions'); },
+    parent:        function () { openPanel('parent'); },
+    focus:         function () { openPanel('focus'); },
+    feedback:      function () { openPanel('feedback'); },
+    notifications: function () { openPanel('notifications'); },
+    links:         function () { openPanel('links'); },
+    history:       function () { openPanel('history'); },
+    about:         function () { openPanel('about'); }
+  };
+
+  document.querySelectorAll('.side-item[data-act]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var a = b.dataset.act; closeMenu();
+      if (ACTIONS[a]) setTimeout(ACTIONS[a], 180);
+    });
+  });
+
+  // ============================================================
+  // FIREBASE AUTHENTICATION (Garage mode)
+  // ============================================================
+  const firebaseConfig = (() => {
+    const cfg = window.safenet?.firebaseConfig || {};
+    return {
+      apiKey: cfg.apiKey || 'AIzaSyC_9PqsXO10JLNejXgUgOhu8oYpX3G_ros',
+      authDomain: cfg.authDomain || 'safe-brauzer-cf748.firebaseapp.com',
+      projectId: cfg.projectId || 'safe-brauzer-cf748',
+      storageBucket: cfg.storageBucket || 'safe-brauzer-cf748.firebasestorage.app',
+      messagingSenderId: cfg.messagingSenderId || '781225555534',
+      appId: cfg.appId || '1:781225555534:web:2cf9a864e1d7238efb351f',
+      measurementId: cfg.measurementId || 'G-MKJZDEJFPN'
+    };
+  })();
+
+  const firebaseEnabled = !!firebaseConfig.apiKey;
+
+  // ── Native Google sign-in (Firebase'siz, Chrome-style)
+  //   Sabab: OAuth Client ID (.env: GOOGLE_CLIENT_ID) Firebase loyihasidagi
+  //   client_id ro'yxatiga kirmasa, `firebase.auth().signInWithCredential(idToken)`
+  //   `auth/invalid-credential` xatosi bilan tushadi. Bu Client ID va Firebase
+  //   loyihasi mos kelmasligi tufayli — konfiguratsiya muammosi.
+  //
+  //   Yechim: Chrome kabi Google userinfo API'sidan foydalanamiz. Main jarayon
+  //   OAuth PKCE bilan access_token oladi va userinfo endpoint'idan {email,name,picture}
+  //   qaytaradi. Biz shu ma'lumotni localStorage `sn_user`'ga yozamiz va UI'ni
+  //   yangilaymiz. Firebase.signInWithCredential opsional (best-effort) — muvaffaqiyat
+  //   bo'lmasa ham asosiy oqim davom etadi.
+  async function firebaseSignInGoogleNative() {
+    try {
+      const result = await window.safenet?.signInGoogle();
+      if (!result || !result.ok) {
+        throw new Error(result?.error || 'OAuth failed');
+      }
+      const profile = result.profile;
+      if (!profile || !profile.email) {
+        throw new Error('Google profile ma\'lumoti kelmadi');
+      }
+      // 1. Asosiy oqim: sn_user'ni yozamiz — bu barcha UI (Garage side-menu, Classic overlay)
+      //    tomonidan o'qiladigan yagona haqiqat manbai.
+      const currentUser = {
+        name: profile.name || profile.email,
+        email: profile.email,
+        uid: profile.id || profile.email,
+        avatar: profile.picture || null,
+        provider: 'google',
+      };
+      localStorage.setItem('sn_user', JSON.stringify(currentUser));
+      window.currentFirebaseUser = currentUser;
+
+      // 2. Profile Manager'ni yangilaymiz — Chrome-style switcher'da email ko'rinishi uchun.
+      try {
+        if (window.safenet_profiles) {
+          const cur = await window.safenet_profiles.current();
+          if (cur && cur.currentId) {
+            await window.safenet_profiles.update(cur.currentId, {
+              email: currentUser.email,
+              name: currentUser.name,
+              avatar: currentUser.avatar,
+            });
+          }
+        }
+      } catch (e) { console.warn('[auth] profile update failed:', e); }
+
+      // 3. Main jarayonni xabardor qilamiz — subscription/parent-control uchun.
+      try { window._ipc?.send('account-set', currentUser.email); } catch (e) {}
+
+      // 4. UI'ni darhol yangilaymiz.
+      try { if (typeof fillUser === 'function') fillUser(); } catch (e) {}
+      try { if (typeof refreshProfiles === 'function') refreshProfiles(); } catch (e) {}
+      try { if (typeof renderProfileState === 'function') renderProfileState(); } catch (e) {}
+
+      // 5. Best-effort Firebase — cross-device Firestore sync uchun (xatoni yutamiz).
+      //    Agar client_id Firebase loyihasida authorized bo'lsa ishlaydi, aks holda skip.
+      if (firebaseEnabled && result.idToken) {
+        try {
+          const credential = firebase.auth.GoogleAuthProvider.credential(result.idToken, result.accessToken);
+          await firebase.auth().signInWithCredential(credential);
+        } catch (fbErr) {
+          console.warn('[auth] Firebase sign-in skipped (OAuth client_id not in Firebase project):', fbErr.code || fbErr.message);
+        }
+      }
+
+      return { ok: true, user: currentUser };
+    } catch (err) {
+      console.error('Google sign-in failed:', err);
+      throw err;
+    }
+  }
+
+  function firebaseSignOut() {
+    if (!firebaseEnabled) return Promise.reject(new Error('Firebase auth is not configured.'));
+    return firebase.auth().signOut();
+  }
+
+  if (firebaseEnabled) {
+    firebase.initializeApp(firebaseConfig);
+    firebase.auth().useDeviceLanguage();
+    // Explicit persistence — Electron file:// da auth state tab'lar orasida
+    // saqlanishi uchun. Aks holda Garage↔Classic sync buziladi.
+    try {
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
+    } catch (e) {}
+    const firebaseProvider = new firebase.auth.GoogleAuthProvider();
+    firebaseProvider.addScope('profile');
+    firebaseProvider.addScope('email');
+
+    if (firebaseEnabled) {
+      // Initial null fire'da sn_user'ni o'chirmaslik — aks holda autoSignInFromProfile
+      // qayta yozadi va cheksiz reload loop bo'ladi. Faqat oldin signed-in bo'lgan
+      // holatdan null'ga o'tsak (genuine sign-out) o'chiramiz.
+      var _fbSawSignedIn = false;
+      firebase.auth().onAuthStateChanged(u => {
+        if (u) {
+          _fbSawSignedIn = true;
+          const currentUser = {
+            name: u.displayName || u.email,
+            email: u.email,
+            uid: u.uid,
+            avatar: u.photoURL || null,
+            provider: 'google'
+          };
+          localStorage.setItem('sn_user', JSON.stringify(currentUser));
+          window.currentFirebaseUser = currentUser;
+          if (window._ipc && window._ipc.send) {
+            window._ipc.send('account-set', u.email);
+          }
+          try {
+            if (window.safenet_profiles) {
+              window.safenet_profiles.current().then(function (cur) {
+                if (cur && cur.currentId) {
+                  window.safenet_profiles.update(cur.currentId, {
+                    email: currentUser.email,
+                    name: currentUser.name,
+                    avatar: currentUser.avatar
+                  }).catch(function(){});
+                }
+              }).catch(function(){});
+            }
+          } catch (e) {}
+          if (typeof renderProfileState === 'function') renderProfileState();
+          if (typeof fillUser === 'function') try { fillUser(); } catch (e) {}
+          if (typeof refreshProfiles === 'function') try { refreshProfiles(); } catch (e) {}
+        } else if (_fbSawSignedIn) {
+          // Haqiqiy sign-out
+          localStorage.removeItem('sn_user');
+          window.currentFirebaseUser = null;
+          if (window._ipc && window._ipc.send) {
+            window._ipc.send('account-set', null);
+          }
+          if (typeof renderProfileState === 'function') renderProfileState();
+          if (typeof fillUser === 'function') try { fillUser(); } catch (e) {}
+        }
+      });
+    }
+
+    // Cross-tab sync: Classic tabda sign-in bo'lsa Garage tabga ham yetkazish uchun.
+    // localStorage 'sn_user' o'zgarsa side-menu qayta chizamiz.
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'sn_user') {
+        if (typeof fillUser === 'function') try { fillUser(); } catch (err) {}
+        if (typeof refreshProfiles === 'function') try { refreshProfiles(); } catch (err) {}
+      }
+    });
+
+    // Legacy listeners removed - now using native PKCE flow
+  }
+
+  // Expose global functions for UI buttons
+  async function signInGoogle() {
+    if (!firebaseEnabled) return Promise.reject(new Error('Firebase auth is not configured. Set FIREBASE_API_KEY and other FIREBASE_* values in .env.'));
+    return firebaseSignInGoogleNative();
+  }
+
+  function signOut() {
+    if (typeof firebaseSignOut === 'function') {
+      firebaseSignOut().catch(() => {});
+    }
+    // Clear local user state
+    localStorage.removeItem('sn_user');
+    location.reload();
+  }
+
+  // Expose for garage.html UI
+  window.firebaseSignInGoogle = signInGoogle;
+  window.firebaseSignOut = firebaseSignOut;
+
+  // Firebase auth state is handled by onAuthStateChanged listener
+  // ============================================================
+})();
+
+/* ── IN-PAGE PANEL MODAL — har panel Garage uslubida native HTML orqali ochiladi.
+   Iframe yo'q, Classic sahifaga o'tish yo'q. Har panel PANELS registrida
+   e'lon qilingan {title, render(body)} bilan tavsiflanadi. */
+(function () {
+  var modal = document.getElementById('panel-modal');
+  var backdrop = document.getElementById('panel-modal-backdrop');
+  var closeBtn = document.getElementById('panel-modal-close');
+  var titleEl = document.getElementById('panel-modal-title');
+  var body = document.getElementById('panel-modal-body');
+  if (!modal || !backdrop || !closeBtn || !titleEl || !body) return;
+
+  var ipc = window._ipc;
+  var pendingCleanups = [];
+  function regCleanup(fn) { if (typeof fn === 'function') pendingCleanups.push(fn); }
+  function runCleanups() {
+    while (pendingCleanups.length) {
+      var fn = pendingCleanups.pop();
+      try { fn(); } catch (e) { console.warn('[panel cleanup]', e); }
+    }
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  function open(panelId) {
+    var p = PANELS[panelId];
+    if (!p) { console.warn('[panel] noma\'lum:', panelId); return; }
+    runCleanups(); // avvalgi panelning subscriptions'lari bo'lsa to'xtatamiz
+    titleEl.textContent = p.title;
+    body.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⌛</div>Yuklanmoqda...</div>';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    try { p.render(body, regCleanup); }
+    catch (e) {
+      console.error('[panel render]', panelId, e);
+      body.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Panel ochilishda xato: ' + esc(e.message || e) + '</div>';
+    }
+  }
+  function close() {
+    runCleanups();
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    body.innerHTML = '';
+  }
+
+  window.openInPagePanel = open;
+  window.closeInPagePanel = close;
+
+  closeBtn.addEventListener('click', close);
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) close();
+  });
+
+  /* ─────────── PANEL RENDERERS ─────────── */
+
+  function renderAbout(b) {
+    b.innerHTML =
+      '<div style="text-align:center;padding:20px 0 30px">' +
+      '  <div style="width:80px;height:80px;margin:0 auto 18px;border-radius:22px;' +
+      '     background:linear-gradient(135deg,#00E5A0,#00C885);display:flex;align-items:center;' +
+      '     justify-content:center;font-size:36px;box-shadow:0 0 30px rgba(0,229,160,.5)">🛡️</div>' +
+      '  <div style="font-size:28px;font-weight:900;letter-spacing:-1px;' +
+      '     background:linear-gradient(120deg,#eaf0fb,#7fffcf);-webkit-background-clip:text;' +
+      '     background-clip:text;color:transparent">NIEX BROWSER</div>' +
+      '  <div style="font-size:11px;letter-spacing:4px;color:#4a8b7a;margin-top:6px">v1.0 · SAFE BY AI</div>' +
+      '</div>' +
+      '<div class="pnl-section">' +
+      '  <div class="pnl-section-h">MISSION</div>' +
+      '  <div style="color:#a5b1c8;line-height:1.6">Zararli internetdan himoya, sog\'lom raqamli muhit va aqlli AI filtrlash. To\'liq internet blokirovka emas — aqlli tanlab bloklash.</div>' +
+      '</div>' +
+      '<div class="pnl-section">' +
+      '  <div class="pnl-section-h">MADE IN</div>' +
+      '  <div style="color:#eaf0fb;font-weight:600">🇺🇿 O\'zbekiston · Tashkent</div>' +
+      '</div>';
+  }
+
+  function renderProfile(b) {
+    // Classic bilan AYNAN BIR XIL profile-service — localStorage kalitlari va
+    // Firestore sinxronizatsiya bir xil. Garage'da o'zgartirilgan ma'lumot
+    // Classic'da ham (va Firestore orqali boshqa qurilmalarda) ko'rinadi.
+    var svc = window.profileService;
+    var authUser = svc ? svc.getAuthenticatedUser() : null;
+    var profile = svc ? (svc.getProfile() || {}) : {};
+    var interests = svc ? (svc.getInterests() || []) : [];
+
+    var email = profile.email || (authUser && authUser.email) || (authUser && authUser.e) || '';
+    var signedIn = !!email;
+    var firstName = profile.firstName || '';
+    var lastName = profile.lastName || '';
+    var displayName = (firstName + ' ' + lastName).trim() || (authUser && (authUser.name || authUser.n)) || (signedIn ? 'Foydalanuvchi' : 'Mehmon');
+    var role = profile.role || '';
+    var age = profile.age || '';
+    var phone = profile.phone || '';
+    var initial = (displayName[0] || (email[0] || '?')).toUpperCase();
+
+    b.innerHTML =
+      '<div style="display:flex;align-items:center;gap:16px;padding:14px 0 22px;border-bottom:1px solid rgba(0,229,160,.1)">' +
+      '  <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00E5A0,#00C885);' +
+      '     display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#032b1f;' +
+      '     box-shadow:0 0 24px rgba(0,229,160,.4);flex-shrink:0">' + esc(initial) + '</div>' +
+      '  <div style="min-width:0;flex:1">' +
+      '    <div style="font-size:17px;font-weight:700;color:#eaf0fb">' + esc(displayName) + '</div>' +
+      '    <div style="font-size:12px;color:#6b8a80;margin-top:3px">' + (signedIn ? esc(email) : 'Hisobga kirmagansiz') + '</div>' +
+      (role ? '    <div style="margin-top:6px"><span style="font-size:10px;letter-spacing:1px;color:#7fffcf;background:rgba(0,229,160,.1);padding:3px 8px;border-radius:999px">' + esc(String(role).toUpperCase()) + '</span></div>' : '') +
+      '  </div>' +
+      '</div>' +
+      (signedIn ? (
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">SHAXSIY MA\'LUMOTLAR</div>' +
+        '  <div style="display:grid;gap:10px;grid-template-columns:1fr 1fr">' +
+        '    <div><label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Ism</label>' +
+        '      <input class="pnl-input" id="p-first" value="' + esc(firstName) + '" style="width:100%" /></div>' +
+        '    <div><label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Familiya</label>' +
+        '      <input class="pnl-input" id="p-last" value="' + esc(lastName) + '" style="width:100%" /></div>' +
+        '    <div><label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Yosh</label>' +
+        '      <input class="pnl-input" id="p-age" type="number" min="1" max="120" value="' + esc(age) + '" style="width:100%" /></div>' +
+        '    <div><label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Telefon</label>' +
+        '      <input class="pnl-input" id="p-phone" value="' + esc(phone) + '" style="width:100%" /></div>' +
+        '    <div style="grid-column:span 2"><label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Rol</label>' +
+        '      <select class="pnl-select" id="p-role" style="width:100%">' +
+        '        <option value=""' + (!role ? ' selected' : '') + '>— tanlang —</option>' +
+        (Array.isArray(window.ROLES) ? window.ROLES : ['student','parent','child','user']).map(function (r) {
+          return '        <option value="' + esc(r) + '"' + (role === r ? ' selected' : '') + '>' + esc(r) + '</option>';
+        }).join('') +
+        '      </select></div>' +
+        '  </div>' +
+        '  <div style="display:flex;justify-content:flex-end;margin-top:14px;gap:8px">' +
+        '    <button class="pnl-btn" id="p-save">Saqlash</button>' +
+        '  </div>' +
+        '  <div id="p-save-status" style="margin-top:8px;font-size:11px;min-height:14px"></div>' +
+        '</div>' +
+        (interests.length > 0 ? (
+          '<div class="pnl-section">' +
+          '  <div class="pnl-section-h">QIZIQISHLAR</div>' +
+          '  <div style="display:flex;flex-wrap:wrap;gap:6px">' +
+          interests.map(function (i) {
+            var id = typeof i === 'string' ? i : (i && i.id) || '';
+            return '<span style="font-size:11px;padding:5px 11px;border-radius:999px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);color:#7fffcf">' + esc(id) + '</span>';
+          }).join('') +
+          '  </div>' +
+          '</div>'
+        ) : '') +
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">HISOB</div>' +
+        '  <div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '    <button class="pnl-btn ghost" id="p-open-account">Google hisobini boshqarish</button>' +
+        '    <button class="pnl-btn danger" id="p-signout">Chiqish</button>' +
+        '  </div>' +
+        '</div>'
+      ) : (
+        '<div class="pnl-section">' +
+        '  <div style="text-align:center;padding:20px 0">' +
+        '    <div style="color:#a5b1c8;font-size:13px;margin-bottom:16px">Profilni saqlash va farzand boshqaruvi uchun Google hisobi bilan kiring.</div>' +
+        '    <button class="pnl-btn" id="p-signin">🔑 Google bilan kirish</button>' +
+        '  </div>' +
+        '</div>'
+      ));
+
+    var siBtn = b.querySelector('#p-signin');
+    if (siBtn) siBtn.addEventListener('click', function () {
+      if (typeof window.firebaseSignInGoogle === 'function') {
+        window.firebaseSignInGoogle().then(function () { renderProfile(b); }).catch(function (e) { alert('Kirish xatosi: ' + (e && e.message || e)); });
+      } else if (window.safenet_auth && window.safenet_auth.signInGoogle) {
+        window.safenet_auth.signInGoogle().then(function () { renderProfile(b); });
+      }
+    });
+    var soBtn = b.querySelector('#p-signout');
+    if (soBtn) soBtn.addEventListener('click', function () {
+      if (!confirm('Hisobdan chiqishga ishonchingiz komilmi?')) return;
+      var after = function () { if (svc && svc.clearProfile) svc.clearProfile(); localStorage.removeItem('sn_u'); renderProfile(b); };
+      if (typeof window.firebaseSignOut === 'function') window.firebaseSignOut().then(after);
+      else if (window.safenet_auth && window.safenet_auth.signOut) window.safenet_auth.signOut().then(after);
+      else after();
+    });
+    var acBtn = b.querySelector('#p-open-account');
+    if (acBtn) acBtn.addEventListener('click', function () {
+      if (window.safenet_auth && window.safenet_auth.openAccount) window.safenet_auth.openAccount();
+    });
+    var svBtn = b.querySelector('#p-save');
+    if (svBtn) svBtn.addEventListener('click', function () {
+      if (!svc || !svc.saveProfile) return alert('profile-service mavjud emas');
+      var st = b.querySelector('#p-save-status');
+      st.textContent = 'Saqlanmoqda...'; st.style.color = '#7fffcf';
+      try {
+        svc.saveProfile({
+          firstName: b.querySelector('#p-first').value.trim(),
+          lastName: b.querySelector('#p-last').value.trim(),
+          age: Number(b.querySelector('#p-age').value) || '',
+          phone: b.querySelector('#p-phone').value.trim(),
+          role: b.querySelector('#p-role').value,
+          email: email,
+          uid: (authUser && (authUser.uid || authUser.email)) || email
+        });
+        st.textContent = '✓ Saqlandi (Firestore\'ga sinxronlangan)'; st.style.color = '#00E5A0';
+      } catch (e) {
+        st.textContent = 'Xato: ' + (e.message || e); st.style.color = '#ff8a98';
+      }
+    });
+  }
+
+  function renderSettings(b) {
+    if (!ipc) { b.innerHTML = '<div class="pnl-empty">IPC mavjud emas</div>'; return; }
+    ipc.invoke('settings-get').then(function (s) {
+      s = s || {};
+      var lang = s.lang || 'uz';
+      var ai = s.ai !== false;
+      var img = s.img !== false;
+      var yt = s.yt !== false;
+      var ab = s.ab !== false;
+
+      b.innerHTML =
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">TIL / LANGUAGE</div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">Interfeys tili</div>' +
+        '      <div class="pnl-row-desc">Toolbar va sahifa matnlari uchun</div>' +
+        '    </div>' +
+        '    <select class="pnl-select" id="s-lang">' +
+        '      <option value="uz"' + (lang==='uz'?' selected':'') + '>O\'zbek</option>' +
+        '      <option value="ru"' + (lang==='ru'?' selected':'') + '>Русский</option>' +
+        '      <option value="en"' + (lang==='en'?' selected':'') + '>English</option>' +
+        '    </select>' +
+        '  </div>' +
+        '</div>' +
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">AI HIMOYA</div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">🧠 AI matn/URL tahlili</div>' +
+        '      <div class="pnl-row-desc">Zararli kalit so\'z va URL detektor — <span style="color:#00E5A0;font-weight:700">doimo faol</span></div>' +
+        '    </div>' +
+        '    <div style="font-size:11px;color:#00E5A0;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);padding:4px 10px;border-radius:999px;font-weight:700">✓ Yoqilgan</div>' +
+        '  </div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">🖼️ Rasm tahlili (NSFW)</div>' +
+        '      <div class="pnl-row-desc">Sahifadagi rasmlarni lokal AI orqali skanerlash — <span style="color:#00E5A0;font-weight:700">doimo faol</span></div>' +
+        '    </div>' +
+        '    <div style="font-size:11px;color:#00E5A0;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);padding:4px 10px;border-radius:999px;font-weight:700">✓ Yoqilgan</div>' +
+        '  </div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">▶️ YouTube filtri</div>' +
+        '      <div class="pnl-row-desc">Video sarlavha va thumbnail bloklash — <span style="color:#00E5A0;font-weight:700">doimo faol</span></div>' +
+        '    </div>' +
+        '    <div style="font-size:11px;color:#00E5A0;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);padding:4px 10px;border-radius:999px;font-weight:700">✓ Yoqilgan</div>' +
+        '  </div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">Reklama bloklash</div>' +
+        '      <div class="pnl-row-desc">Sayt reklamalarini yashirish</div>' +
+        '    </div>' +
+        '    <div class="pnl-toggle' + (ab?' on':'') + '" data-k="ab"></div>' +
+        '  </div>' +
+        '</div>' +
+        // ── ORQA FON (custom background — rasm yoki video) ──
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">🖼️ ORQA FON</div>' +
+        '  <div class="pnl-row" style="flex-direction:column;align-items:stretch;gap:12px">' +
+        '    <div style="font-size:12px;color:#a5b1c8;line-height:1.55">Bosh sahifa orqa foni uchun o\'zingizga yoqqan rasm yoki video tanlang. Fayl qurilmangizda saqlanadi (max 50 MB).</div>' +
+        '    <div id="bg-preview" style="border-radius:12px;overflow:hidden;background:#0a1218;border:1px solid rgba(0,229,160,.15);min-height:120px;display:flex;align-items:center;justify-content:center;color:#4a5c6b;font-size:12px">Standart fon (garaj videosi)</div>' +
+        '    <div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '      <button class="pnl-btn" id="bg-pick">📁 Fayl tanlash</button>' +
+        '      <button class="pnl-btn ghost" id="bg-reset">↺ Standart fonga qaytish</button>' +
+        '    </div>' +
+        '    <input type="file" id="bg-file" accept="image/*,video/*" style="display:none" />' +
+        '    <div id="bg-status" style="font-size:11px;min-height:14px"></div>' +
+        '  </div>' +
+        '</div>';
+
+      b.querySelector('#s-lang').addEventListener('change', function (e) {
+        ipc.send('settings-changed', Object.assign({}, s, { lang: e.target.value }));
+        s.lang = e.target.value;
+      });
+      Array.prototype.forEach.call(b.querySelectorAll('.pnl-toggle'), function (t) {
+        t.addEventListener('click', function () {
+          var k = t.dataset.k;
+          t.classList.toggle('on');
+          s[k] = t.classList.contains('on');
+          ipc.send('settings-changed', s);
+        });
+      });
+
+      // ── Custom background picker ──
+      var bgPreview = b.querySelector('#bg-preview');
+      var bgFile = b.querySelector('#bg-file');
+      var bgPick = b.querySelector('#bg-pick');
+      var bgReset = b.querySelector('#bg-reset');
+      var bgStatus = b.querySelector('#bg-status');
+
+      function refreshBgPreview() {
+        try {
+          if (!window.NIEX_THEMES) { bgPreview.innerHTML = '<div style="padding:14px">Tema tizimi yuklanmagan</div>'; return; }
+          var activeId = window.NIEX_THEMES.getActiveId();
+          var t = window.NIEX_THEMES.getById(activeId);
+          if (!t || t.builtin) {
+            bgPreview.innerHTML = '<div style="padding:14px">Standart Garage tema (garaj videosi) — o\'zgartirilmagan</div>';
+            return;
+          }
+          // Manba yangi (src, diskdagi fayl) yoki eski (dataUrl) bo'lishi mumkin
+          var pv = window.NIEX_THEMES.bgSrc(t);
+          if (t.bg && t.bg.type === 'image') {
+            bgPreview.innerHTML = '<img src="' + esc(pv) + '" style="width:100%;height:180px;object-fit:cover" /><div style="padding:6px 10px;font-size:11px;color:#a5b1c8">Aktiv: ' + esc(t.name) + '</div>';
+          } else if (t.bg && t.bg.type === 'video') {
+            bgPreview.innerHTML = '<video src="' + esc(pv) + '" autoplay muted loop playsinline style="width:100%;height:180px;object-fit:cover"></video><div style="padding:6px 10px;font-size:11px;color:#a5b1c8">Aktiv: ' + esc(t.name) + '</div>';
+          }
+        } catch(e) { bgPreview.innerHTML = '<div style="padding:14px;color:#ff8a98">Preview xatosi</div>'; }
+      }
+      refreshBgPreview();
+
+      bgPick.addEventListener('click', function () { bgFile.click(); });
+      bgFile.addEventListener('change', function (e) {
+        var f = e.target.files && e.target.files[0];
+        if (!f) return;
+        // Fayl diskka saqlanadi — localStorage cheklovi yo'q
+        var MAX = 50 * 1024 * 1024;
+        if (f.size > MAX) {
+          bgStatus.textContent = '❌ Fayl 50 MB dan katta (' + Math.round(f.size / 1024 / 1024) + ' MB). Kichikroq tanlang.';
+          bgStatus.style.color = '#ff8a98';
+          bgFile.value = '';
+          return;
+        }
+        var isImage = /^image\//.test(f.type);
+        var isVideo = /^video\//.test(f.type);
+        if (!isImage && !isVideo) {
+          bgStatus.textContent = '❌ Faqat rasm yoki video fayl';
+          bgStatus.style.color = '#ff8a98';
+          return;
+        }
+        var ipcT2 = window._ipc || window.ipcRenderer;
+        if (!ipcT2 || !ipcT2.invoke) {
+          bgStatus.textContent = '❌ Ichki ulanish yo\'q — brauzerni qayta ishga tushiring';
+          bgStatus.style.color = '#ff8a98';
+          bgFile.value = '';
+          return;
+        }
+        bgStatus.textContent = '⌛ Saqlanmoqda (' + Math.round(f.size / 1024 / 1024) + ' MB)...';
+        bgStatus.style.color = '#7fffcf';
+
+        f.arrayBuffer().then(function (buf) {
+          var ext = (f.name.match(/\.([^.]+)$/) || [, 'bin'])[1];
+          return ipcT2.invoke('theme-file-save', { data: new Uint8Array(buf), ext: ext });
+        }).then(function (res) {
+          try {
+            if (!res || !res.ok) throw new Error((res && res.error) || 'Saqlanmadi');
+            // MUHIM: Garage'ning standart fonini O'ZGARTIRMAYMIZ — yangi tema qo'shiladi.
+            // Foydalanuvchi tepadagi tema pikker orqali eski standart Garage'ga qaytishi mumkin.
+            var themeName = f.name.replace(/\.[^.]+$/, '') || 'My Theme';
+            if (window.NIEX_THEMES) {
+              var r = window.NIEX_THEMES.addCustom(themeName, isImage ? 'image' : 'video', res.url, res.path);
+              if (!r.ok) throw new Error(r.error || 'Saqlanmadi');
+              window.NIEX_THEMES.setActive(r.theme.id);
+            }
+            bgStatus.textContent = '✓ Yangi tema qo\'shildi ("' + themeName + '"). Standart Garage tegilmagan.';
+            bgStatus.style.color = '#00E5A0';
+            refreshBgPreview();
+            setTimeout(function () {
+              bgStatus.innerHTML = '✓ Yangi tema aktivlashtirildi. <a href="#" style="color:#7fffcf;text-decoration:underline" id="bg-reload">Bosh sahifani qayta yuklash</a>';
+              var rl = bgStatus.querySelector('#bg-reload');
+              if (rl) rl.addEventListener('click', function (ev) { ev.preventDefault(); if (ipc && ipc.send) ipc.send('go-home'); else location.reload(); });
+            }, 700);
+          } catch (err) {
+            bgStatus.textContent = '❌ Saqlash xatosi: ' + (err.message || err);
+            bgStatus.style.color = '#ff8a98';
+          }
+          bgFile.value = '';
+        }).catch(function (err) {
+          bgStatus.textContent = '❌ Fayl o\'qishda xato: ' + (err && err.message ? err.message : err);
+          bgStatus.style.color = '#ff8a98';
+          bgFile.value = '';
+        });
+      });
+
+      bgReset.addEventListener('click', function () {
+        if (!confirm('Standart Garage temasiga qaytishni xohlaysizmi?')) return;
+        if (window.NIEX_THEMES) window.NIEX_THEMES.setActive('garage');
+        bgStatus.textContent = '✓ Standart Garage tema aktivlashtirildi';
+        bgStatus.style.color = '#00E5A0';
+        refreshBgPreview();
+        setTimeout(function () { if (ipc && ipc.send) ipc.send('go-home'); else location.reload(); }, 500);
+      });
+    }).catch(function (e) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Sozlamalarni yuklab bo\'lmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  function renderLinks(b) {
+    var links = [];
+    try { links = JSON.parse(localStorage.getItem('sn_quick_links') || '[]'); } catch (e) {}
+    if (!Array.isArray(links)) links = [];
+
+    function save() { try { localStorage.setItem('sn_quick_links', JSON.stringify(links)); } catch (e) {} }
+
+    function draw() {
+      b.innerHTML =
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">TEZKOR HAVOLALAR</div>' +
+        (links.length === 0
+          ? '  <div class="pnl-empty"><div class="pnl-empty-ic">🔗</div>Hali havolalar qo\'shilmagan</div>'
+          : links.map(function (l, i) {
+            return '<div class="pnl-row">' +
+              '  <div class="pnl-row-info" style="cursor:pointer" data-i="' + i + '">' +
+              '    <div class="pnl-row-title">' + esc(l.name || l.url) + '</div>' +
+              '    <div class="pnl-row-desc">' + esc(l.url) + '</div>' +
+              '  </div>' +
+              '  <button class="pnl-btn danger" data-del="' + i + '">✕</button>' +
+              '</div>';
+          }).join('')
+        ) +
+        '</div>' +
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">YANGI QO\'SHISH</div>' +
+        '  <div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '    <input class="pnl-input" id="l-name" placeholder="Nomi (masalan: YouTube)" style="flex:1;min-width:150px" />' +
+        '    <input class="pnl-input" id="l-url" placeholder="URL (https://...)" style="flex:2;min-width:200px" />' +
+        '    <button class="pnl-btn" id="l-add">+ Qo\'shish</button>' +
+        '  </div>' +
+        '</div>';
+
+      Array.prototype.forEach.call(b.querySelectorAll('[data-i]'), function (el) {
+        el.addEventListener('click', function () {
+          var i = Number(el.dataset.i);
+          var url = links[i] && links[i].url;
+          if (url && ipc) ipc.send('navigate', url);
+        });
+      });
+      Array.prototype.forEach.call(b.querySelectorAll('[data-del]'), function (el) {
+        el.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var i = Number(el.dataset.del);
+          links.splice(i, 1); save(); draw();
+        });
+      });
+      b.querySelector('#l-add').addEventListener('click', function () {
+        var name = b.querySelector('#l-name').value.trim();
+        var url = b.querySelector('#l-url').value.trim();
+        if (!url) return alert('URL kiritilmadi');
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        links.push({ name: name || url, url: url }); save(); draw();
+      });
+    }
+    draw();
+  }
+
+  function renderHistory(b) {
+    if (!ipc) { b.innerHTML = '<div class="pnl-empty">IPC mavjud emas</div>'; return; }
+    ipc.invoke('history-get').then(function (hist) {
+      hist = Array.isArray(hist) ? hist.slice(0, 100) : [];
+      if (hist.length === 0) {
+        b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">🕑</div>Tarix bo\'sh</div>';
+        return;
+      }
+      b.innerHTML =
+        '<div style="display:flex;justify-content:flex-end;margin-bottom:14px">' +
+        '  <button class="pnl-btn danger" id="h-clear">🗑 Hammasini tozalash</button>' +
+        '</div>' +
+        hist.map(function (h) {
+          var d = h.at ? new Date(h.at) : null;
+          var dstr = d ? d.toLocaleString() : '';
+          return '<div class="pnl-row">' +
+            '  <div class="pnl-row-info" style="cursor:pointer" data-url="' + esc(h.url || '') + '">' +
+            '    <div class="pnl-row-title">' + esc(h.title || h.url || '(nomsiz)') + '</div>' +
+            '    <div class="pnl-row-desc">' + esc(h.url || '') + ' · ' + esc(dstr) + '</div>' +
+            '  </div>' +
+            '  <button class="pnl-btn danger" data-del-id="' + esc(h.id || '') + '">✕</button>' +
+            '</div>';
+        }).join('');
+
+      Array.prototype.forEach.call(b.querySelectorAll('[data-url]'), function (el) {
+        el.addEventListener('click', function () {
+          var url = el.dataset.url;
+          if (url && ipc) ipc.send('navigate', url);
+          close();
+        });
+      });
+      Array.prototype.forEach.call(b.querySelectorAll('[data-del-id]'), function (el) {
+        el.addEventListener('click', function (e) {
+          e.stopPropagation();
+          ipc.invoke('history-delete', el.dataset.delId).then(function(){ renderHistory(b); });
+        });
+      });
+      b.querySelector('#h-clear').addEventListener('click', function () {
+        if (!confirm('Butun tarix tozalansinmi?')) return;
+        ipc.invoke('history-clear').then(function(){ renderHistory(b); });
+      });
+    }).catch(function (e) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Tarix yuklanmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  function renderFeedback(b) {
+    // Classic bilan AYNAN BIR XIL — HTTP POST → http://localhost:13337/api/feedback
+    // (main.js browser-cloud.js feedback API serverni ochadi). Rasm base64 sifatida yuboriladi.
+    var feedbackImageBase64 = null;
+    var authEmail = '';
+    try {
+      var svc = window.profileService;
+      var au = svc ? svc.getAuthenticatedUser() : null;
+      authEmail = (au && (au.email || au.e)) || '';
+    } catch (e) {}
+
+    b.innerHTML =
+      '<div class="pnl-section">' +
+      '  <div style="color:#a5b1c8;margin-bottom:14px">Nima ishlamayapti, nima yaxshilanishi kerak? Bizga yozing.</div>' +
+      '  <label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Fikr / muammo tavsifi</label>' +
+      '  <textarea class="pnl-input" id="fb-text" rows="6" maxlength="800" placeholder="Muammo yoki taklifingizni yozing..." style="width:100%;resize:vertical;font-family:inherit"></textarea>' +
+      '  <div style="margin-top:12px">' +
+      '    <label style="font-size:11px;color:#6b8a80;display:block;margin-bottom:4px">Email (ixtiyoriy — javob olish uchun)</label>' +
+      '    <input class="pnl-input" id="fb-email" type="email" placeholder="email@example.com" value="' + esc(authEmail) + '" style="width:100%" />' +
+      '  </div>' +
+      '  <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '    <button class="pnl-btn ghost" id="fb-img-btn" type="button">📷 Rasm qo\'shish</button>' +
+      '    <input type="file" id="fb-img-input" accept="image/*" style="display:none" />' +
+      '    <div id="fb-img-info" style="font-size:11px;color:#6b8a80"></div>' +
+      '  </div>' +
+      '  <div style="display:flex;justify-content:flex-end;margin-top:18px;gap:8px">' +
+      '    <button class="pnl-btn" id="fb-send">✅ Yuborish</button>' +
+      '  </div>' +
+      '  <div id="fb-status" style="margin-top:12px;font-size:11px;min-height:14px"></div>' +
+      '</div>';
+
+    var imgBtn = b.querySelector('#fb-img-btn');
+    var imgInput = b.querySelector('#fb-img-input');
+    var imgInfo = b.querySelector('#fb-img-info');
+    imgBtn.addEventListener('click', function () { imgInput.click(); });
+    imgInput.addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) {
+        imgInfo.textContent = '⚠️ Rasm 2 MB dan kichik bo\'lishi kerak';
+        imgInfo.style.color = '#ff8a98';
+        feedbackImageBase64 = null;
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        feedbackImageBase64 = String(reader.result || '');
+        imgInfo.textContent = '📎 ' + f.name + ' (' + Math.round(f.size / 1024) + ' KB)';
+        imgInfo.style.color = '#7fffcf';
+      };
+      reader.readAsDataURL(f);
+    });
+
+    b.querySelector('#fb-send').addEventListener('click', function () {
+      var text = b.querySelector('#fb-text').value.trim();
+      var email = b.querySelector('#fb-email').value.trim();
+      var status = b.querySelector('#fb-status');
+      var sendBtn = b.querySelector('#fb-send');
+      if (!text) { status.textContent = '❌ Iltimos, fikringizni kiriting'; status.style.color = '#ff8a98'; return; }
+      status.textContent = '⏳ Yuborilmoqda...'; status.style.color = '#7fffcf';
+      sendBtn.disabled = true;
+      // Classic'daga bir xil payload
+      var payload = {
+        text: text,
+        email: email || null,
+        image: feedbackImageBase64 || null,
+        timestamp: new Date().toISOString()
+      };
+      fetch('http://localhost:13337/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error(t || 'Server xato: ' + r.status); });
+        status.textContent = '✅ Fikringiz yuborildi. Rahmat!';
+        status.style.color = '#00E5A0';
+        b.querySelector('#fb-text').value = '';
+        feedbackImageBase64 = null;
+        if (imgInfo) { imgInfo.textContent = ''; }
+        if (imgInput) { imgInput.value = ''; }
+      }).catch(function (e) {
+        status.textContent = '❌ Yuborilmadi: ' + (e.message || e);
+        status.style.color = '#ff8a98';
+      }).then(function () { sendBtn.disabled = false; });
+    });
+  }
+
+  function renderNotifications(b) {
+    if (!ipc) { b.innerHTML = '<div class="pnl-empty">IPC mavjud emas</div>'; return; }
+    ipc.invoke('notifications-get').then(function (items) {
+      items = Array.isArray(items) ? items : [];
+      if (items.length === 0) {
+        b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">🔕</div>Yangi bildirishnoma yo\'q</div>';
+        return;
+      }
+      var unread = items.filter(function(x){return !x.read;}).map(function(x){return x.id;});
+      b.innerHTML =
+        (unread.length > 0
+          ? '<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="pnl-btn ghost" id="n-ack-all">Hammasini o\'qilgan qilish</button></div>'
+          : ''
+        ) +
+        items.map(function (n) {
+          var d = n.createdAt ? new Date(n.createdAt) : null;
+          var dstr = d ? d.toLocaleString() : '';
+          var ic = (n.meta && n.meta.icon) || '🔔';
+          return '<div class="pnl-row" style="' + (n.read ? '' : 'border-left:3px solid #FF4757;padding-left:10px') + '">' +
+            '  <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.05);' +
+            '     display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">' + esc(ic) + '</div>' +
+            '  <div class="pnl-row-info">' +
+            '    <div class="pnl-row-title">' + esc(n.title || 'Bildirishnoma') + '</div>' +
+            '    <div class="pnl-row-desc">' + esc(n.body || '') + '</div>' +
+            '    <div style="font-size:10px;color:#6b7b94;margin-top:4px">' + esc(dstr) + '</div>' +
+            '  </div>' +
+            '</div>';
+        }).join('');
+      var ackBtn = b.querySelector('#n-ack-all');
+      if (ackBtn) ackBtn.addEventListener('click', function () {
+        ipc.invoke('notifications-ack', unread).then(function(){ renderNotifications(b); });
+      });
+    }).catch(function (e) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Yuklanmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  function renderExtensions(b) {
+    if (!ipc) { b.innerHTML = '<div class="pnl-empty">IPC mavjud emas</div>'; return; }
+    ipc.invoke('chrome-ext-list').then(function (list) {
+      list = Array.isArray(list) ? list : [];
+      b.innerHTML =
+        '<div style="display:flex;justify-content:flex-end;margin-bottom:14px;gap:8px">' +
+        '  <button class="pnl-btn" id="e-add">+ O\'rnatish</button>' +
+        '  <button class="pnl-btn ghost" id="e-store">Store</button>' +
+        '</div>' +
+        (list.length === 0
+          ? '<div class="pnl-empty"><div class="pnl-empty-ic">🧩</div>Hech qanday extension o\'rnatilmagan</div>'
+          : list.map(function (x) {
+            return '<div class="pnl-row">' +
+              '  <div class="pnl-row-info">' +
+              '    <div class="pnl-row-title">' + esc(x.name || 'Nomsiz') + (x.enabled ? ' · <span style="color:#00E5A0;font-size:10px">FAOL</span>' : ' · <span style="color:#FF4757;font-size:10px">O\'CHIQ</span>') + '</div>' +
+              '    <div class="pnl-row-desc">v' + esc(x.version || '?') + ' · MV' + esc(x.manifest_version || 2) + '</div>' +
+              '  </div>' +
+              '  <div style="display:flex;gap:6px">' +
+              '    <button class="pnl-btn ghost" data-tog="' + esc(x.id) + '" data-en="' + (x.enabled ? '1' : '0') + '">' + (x.enabled ? 'O\'chirish' : 'Yoqish') + '</button>' +
+              '    <button class="pnl-btn danger" data-rem="' + esc(x.id) + '">✕</button>' +
+              '  </div>' +
+              '</div>';
+          }).join('')
+        );
+      b.querySelector('#e-add').addEventListener('click', function () {
+        ipc.invoke('chrome-ext-install-unpacked').then(function (r) {
+          if (r && r.ok) renderExtensions(b);
+          else if (r && !r.canceled && r.error) alert('Xato: ' + r.error);
+        });
+      });
+      b.querySelector('#e-store').addEventListener('click', function () { ipc.invoke('chrome-ext-open-store'); });
+      Array.prototype.forEach.call(b.querySelectorAll('[data-tog]'), function (btn) {
+        btn.addEventListener('click', function () {
+          ipc.invoke('chrome-ext-toggle', { id: btn.dataset.tog, enabled: btn.dataset.en !== '1' }).then(function(){ renderExtensions(b); });
+        });
+      });
+      Array.prototype.forEach.call(b.querySelectorAll('[data-rem]'), function (btn) {
+        btn.addEventListener('click', function () {
+          if (!confirm('Extension o\'chirilsinmi?')) return;
+          ipc.invoke('chrome-ext-uninstall', btn.dataset.rem).then(function(){ renderExtensions(b); });
+        });
+      });
+    }).catch(function (e) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Yuklanmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  function renderFocusBlocklist(host) {
+    if (!host) return;
+    if (!ipc) { host.innerHTML = ''; return; }
+    ipc.invoke('focus-blocks-get').then(function (data) {
+      data = data || {};
+      var custom = Array.isArray(data.customDomains) ? data.customDomains : [];
+      host.innerHTML =
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">SHAXSIY BLOCKLIST</div>' +
+        '  <div style="color:#a5b1c8;font-size:11px;margin-bottom:12px;line-height:1.6">Focus rejimi vaqtida ochilmaydigan URL/domen qo\'shing. Domen qo\'shsangiz uning barcha sahifalari ham bloklanadi (masalan <code style="color:#7fffcf">facebook.com</code> → <code style="color:#7fffcf">facebook.com/messages</code> ham ochilmaydi).</div>' +
+        '  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
+        '    <input class="pnl-input" id="fb-add-input" placeholder="masalan: facebook.com yoki https://youtube.com" style="flex:1;min-width:200px" />' +
+        '    <button class="pnl-btn" id="fb-add-btn">+ Qo\'shish</button>' +
+        '  </div>' +
+        (custom.length === 0
+          ? '  <div class="pnl-empty"><div class="pnl-empty-ic">🔗</div>Hozircha shaxsiy blok yo\'q</div>'
+          : custom.map(function (d) {
+            return '<div class="pnl-row">' +
+              '  <div class="pnl-row-info"><div class="pnl-row-title">🚫 ' + esc(d) + '</div></div>' +
+              '  <button class="pnl-btn danger" data-fb-rm="' + esc(d) + '" title="O\'chirish">✕</button>' +
+              '</div>';
+          }).join('')
+        );
+      var addBtn = host.querySelector('#fb-add-btn');
+      var addInp = host.querySelector('#fb-add-input');
+      var doAdd = function () {
+        var v = (addInp.value || '').trim();
+        if (!v) return;
+        addBtn.disabled = true;
+        ipc.invoke('focus-blocks-add-domain', v).then(function (r) {
+          addBtn.disabled = false;
+          if (r && r.ok === false && r.error) { alert('Xato: ' + r.error); return; }
+          addInp.value = '';
+          renderFocusBlocklist(host);
+        }).catch(function (e) { addBtn.disabled = false; alert('Xato: ' + (e.message || e)); });
+      };
+      addBtn.addEventListener('click', doAdd);
+      addInp.addEventListener('keydown', function (e) { if (e.key === 'Enter') doAdd(); });
+      Array.prototype.forEach.call(host.querySelectorAll('[data-fb-rm]'), function (btn) {
+        btn.addEventListener('click', function () {
+          ipc.invoke('focus-blocks-remove-domain', btn.dataset.fbRm).then(function () { renderFocusBlocklist(host); });
+        });
+      });
+    }).catch(function (e) {
+      host.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Blocklist yuklanmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  /* ── FOCUS STATISTIKA ────────────────────────────────────────────
+     Ma'lumot manbai: focus-get → statistics (FocusManager sessiyalardan
+     hisoblaydi). Hech qanday soxta raqam yo'q — sessiya bo'lmasa 0. */
+
+  var UZ_MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+  var UZ_WD = ['Ya','Du','Se','Cho','Pa','Ju','Sha'];
+
+  function fmtDur(min) {
+    min = Math.round(Number(min) || 0);
+    if (min <= 0) return '0 daq';
+    var h = Math.floor(min / 60), m = min % 60;
+    if (h && m) return h + ' soat ' + m + ' daq';
+    if (h) return h + ' soat';
+    return m + ' daq';
+  }
+  function monthLabel(key) {
+    if (!key) return '—';
+    var p = String(key).split('-');
+    var mi = (Number(p[1]) || 1) - 1;
+    return (UZ_MONTHS[mi] || '?') + ' ' + p[0];
+  }
+  function statCard(label, value, sub, color) {
+    return '<div style="flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);' +
+           'border-radius:12px;padding:14px 12px;text-align:center">' +
+           '<div style="font-size:22px;font-weight:900;color:' + (color || '#eaf0fb') + ';line-height:1.1">' + value + '</div>' +
+           '<div style="font-size:10px;letter-spacing:1.2px;color:#7f8fa6;text-transform:uppercase;margin-top:6px">' + label + '</div>' +
+           (sub ? '<div style="font-size:10px;color:#5f7286;margin-top:3px">' + sub + '</div>' : '') +
+           '</div>';
+  }
+  function deltaBadge(cur, prev) {
+    cur = Number(cur) || 0; prev = Number(prev) || 0;
+    if (prev === 0 && cur === 0) return '<span style="color:#6b8a80;font-size:11px">o\'zgarishsiz</span>';
+    if (prev === 0) return '<span style="color:#00E5A0;font-size:11px;font-weight:700">▲ yangi</span>';
+    var pct = Math.round(((cur - prev) / prev) * 100);
+    if (pct === 0) return '<span style="color:#6b8a80;font-size:11px">o\'zgarishsiz</span>';
+    var up = pct > 0;
+    return '<span style="color:' + (up ? '#00E5A0' : '#ff7a7a') + ';font-size:11px;font-weight:700">' +
+           (up ? '▲ +' : '▼ ') + pct + '%</span>';
+  }
+
+  function renderFocusStats(b, regCleanup) {
+    if (!ipc) { b.innerHTML = '<div class="pnl-empty">IPC mavjud emas</div>'; return; }
+    b.innerHTML = '<div class="pnl-empty">Statistika yuklanmoqda…</div>';
+
+    ipc.invoke('focus-get').then(function (focus) {
+      var st = (focus && focus.statistics) || null;
+      if (!st) {
+        b.innerHTML =
+          '<div class="pnl-section">' +
+          '  <button class="pnl-btn ghost" id="fs-back" style="margin-bottom:14px">← Orqaga</button>' +
+          '  <div class="pnl-empty"><div class="pnl-empty-ic">📊</div>Statistika mavjud emas.<br>' +
+          '  <span style="font-size:11px;color:#6b8a80">Brauzerni qayta ishga tushiring — yangi statistika moduli yuklanadi.</span></div>' +
+          '</div>';
+        b.querySelector('#fs-back').addEventListener('click', function(){ renderFocus(b, regCleanup); });
+        return;
+      }
+
+      var streak = st.streak || { current: 0, longest: 0 };
+      var today = st.today || { minutes: 0, sessions: 0, blocked: 0 };
+      var cm = st.currentMonth || {}, pm = st.previousMonth || {};
+      var tot = st.totals || {};
+      var week = st.last7Days || [];
+
+      // ── Haftalik ustunli grafik ──
+      var maxMin = 0;
+      for (var i = 0; i < week.length; i++) if (week[i].minutes > maxMin) maxMin = week[i].minutes;
+      var chart = '';
+      for (var j = 0; j < week.length; j++) {
+        var d = week[j];
+        var pct = maxMin > 0 ? Math.round((d.minutes / maxMin) * 100) : 0;
+        var isToday = (j === week.length - 1);
+        chart +=
+          '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">' +
+          '  <div style="font-size:9px;color:' + (d.minutes ? '#7fffcf' : '#4a5568') + ';height:12px">' + (d.minutes ? d.minutes : '') + '</div>' +
+          '  <div style="width:100%;height:70px;display:flex;align-items:flex-end">' +
+          '    <div style="width:100%;height:' + Math.max(pct, d.minutes > 0 ? 6 : 2) + '%;border-radius:4px 4px 2px 2px;' +
+                 'background:' + (d.minutes > 0
+                    ? (isToday ? 'linear-gradient(180deg,#00E5A0,#00C885)' : 'linear-gradient(180deg,rgba(0,229,160,.55),rgba(0,200,133,.35))')
+                    : 'rgba(255,255,255,.06)') + '"></div>' +
+          '  </div>' +
+          '  <div style="font-size:9px;color:' + (isToday ? '#00E5A0' : '#6b8a80') + ';font-weight:' + (isToday ? '800' : '600') + '">' +
+                (UZ_WD[d.weekday] || '') + '</div>' +
+          '</div>';
+      }
+
+      // ── Oylik tarix ──
+      var hist = st.monthlyHistory || [];
+      var histRows = '';
+      for (var k = 0; k < hist.length; k++) {
+        var m = hist[k];
+        histRows +=
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;' +
+          'border-bottom:1px solid rgba(255,255,255,.05)">' +
+          '  <div><div style="font-size:13px;font-weight:700;color:#eaf0fb">' + monthLabel(m.month) + '</div>' +
+          '  <div style="font-size:10px;color:#6b8a80;margin-top:2px">' + m.sessions + ' sessiya · ' + m.activeDays + ' faol kun</div></div>' +
+          '  <div style="text-align:right"><div style="font-size:13px;font-weight:800;color:#7fffcf">' + fmtDur(m.minutes) + '</div>' +
+          '  <div style="font-size:10px;color:#6b8a80;margin-top:2px">kuniga ~' + fmtDur(m.avgMinutesPerActiveDay) + '</div></div>' +
+          '</div>';
+      }
+      if (!histRows) histRows = '<div style="padding:16px;text-align:center;color:#6b8a80;font-size:12px">Hali oylik ma\'lumot yo\'q</div>';
+
+      var streakColor = streak.current > 0 ? '#00E5A0' : '#5f7286';
+
+      b.innerHTML =
+        '<div class="pnl-section">' +
+        '  <button class="pnl-btn ghost" id="fs-back" style="margin-bottom:14px">← Orqaga</button>' +
+
+        /* Streak hero */
+        '  <div style="text-align:center;padding:22px 16px;border-radius:14px;margin-bottom:16px;' +
+        '  background:radial-gradient(ellipse at 50% 0%,rgba(0,229,160,.14),rgba(0,229,160,.04));' +
+        '  border:1px solid rgba(0,229,160,' + (streak.current > 0 ? '.3' : '.12') + ')">' +
+        '    <div style="font-size:34px;line-height:1">' + (streak.current > 0 ? '🔥' : '💤') + '</div>' +
+        '    <div style="font-size:44px;font-weight:900;color:' + streakColor + ';letter-spacing:-2px;margin-top:4px">' + streak.current + '</div>' +
+        '    <div style="font-size:11px;letter-spacing:2.5px;color:#7fffcf;text-transform:uppercase">kunlik seriya</div>' +
+        '    <div style="font-size:11px;color:#6b8a80;margin-top:8px">Eng uzun: <b style="color:#a5b1c8">' + (streak.longest || 0) + '</b> kun' +
+             (streak.lastActiveDay ? ' · Oxirgi: ' + streak.lastActiveDay : '') + '</div>' +
+        (streak.current === 0
+          ? '    <div style="font-size:11px;color:#ffb86b;margin-top:8px">Seriya uzildi — bugun focus qilsangiz 1 dan boshlanadi</div>'
+          : '') +
+        '  </div>' +
+
+        /* Bugun */
+        '  <div class="pnl-section-h">BUGUN</div>' +
+        '  <div style="display:flex;gap:8px;margin-bottom:16px">' +
+             statCard('Focus vaqti', fmtDur(today.minutes), null, '#00E5A0') +
+             statCard('Sessiya', today.sessions, null, '#eaf0fb') +
+             statCard('Bloklandi', today.blocked, null, '#ffb86b') +
+        '  </div>' +
+
+        /* Haftalik grafik */
+        '  <div class="pnl-section-h">OXIRGI 7 KUN</div>' +
+        '  <div style="display:flex;gap:6px;align-items:flex-end;padding:12px 8px 8px;background:rgba(255,255,255,.03);' +
+        '  border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-bottom:16px">' + chart + '</div>' +
+
+        /* Oylik taqqoslash */
+        '  <div class="pnl-section-h">OYLIK HISOBOT</div>' +
+        '  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px;margin-bottom:16px">' +
+        '    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '      <div><div style="font-size:12px;color:#7fffcf;font-weight:700">' + monthLabel(cm.month) + ' (joriy)</div>' +
+        '      <div style="font-size:20px;font-weight:900;color:#eaf0fb;margin-top:3px">' + fmtDur(cm.minutes) + '</div>' +
+        '      <div style="font-size:10px;color:#6b8a80;margin-top:2px">' + (cm.sessions || 0) + ' sessiya · ' + (cm.activeDays || 0) + ' faol kun</div></div>' +
+        '      <div style="text-align:right">' + deltaBadge(cm.minutes, pm.minutes) +
+        '      <div style="font-size:10px;color:#6b8a80;margin-top:4px">o\'tgan oyga nisbatan</div></div>' +
+        '    </div>' +
+        '    <div style="height:1px;background:rgba(255,255,255,.07);margin:10px 0"></div>' +
+        '    <div style="display:flex;justify-content:space-between;align-items:center">' +
+        '      <div><div style="font-size:12px;color:#8ea3c4;font-weight:700">' + monthLabel(pm.month) + ' (o\'tgan)</div>' +
+        '      <div style="font-size:16px;font-weight:800;color:#a5b1c8;margin-top:3px">' + fmtDur(pm.minutes) + '</div></div>' +
+        '      <div style="text-align:right;font-size:10px;color:#6b8a80">' + (pm.sessions || 0) + ' sessiya<br>' + (pm.activeDays || 0) + ' faol kun</div>' +
+        '    </div>' +
+        '  </div>' +
+
+        /* Umumiy */
+        '  <div class="pnl-section-h">UMUMIY NATIJA</div>' +
+        '  <div style="display:flex;gap:8px;margin-bottom:8px">' +
+             statCard('Jami focus', fmtDur(tot.minutes), null, '#00E5A0') +
+             statCard('Sessiyalar', tot.sessions || 0,
+               (tot.startedCount && tot.startedCount !== tot.sessions ? tot.startedCount + ' ta boshlangan' : null), '#eaf0fb') +
+        '  </div>' +
+        '  <div style="display:flex;gap:8px;margin-bottom:16px">' +
+             statCard('Faol kunlar', tot.activeDays || 0, null, '#eaf0fb') +
+             statCard('Eng uzun', fmtDur(tot.longestSessionMinutes), 'bitta sessiya', '#7fffcf') +
+        '  </div>' +
+
+        /* Oylik tarix */
+        '  <div class="pnl-section-h">OYLAR TARIXI</div>' +
+        '  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden">' +
+             histRows +
+        '  </div>' +
+        '  <div style="margin-top:12px;font-size:10px;color:#6b8a80;line-height:1.6">' +
+        '    Vaqt sessiya davomida real o\'lchanadi. Pauza hisobga olinmaydi, ' +
+        '    ilova yopilsa o\'sha paytgacha o\'tirgan vaqt saqlanadi. ' +
+        '    1 daqiqadan qisqa urinishlar natijaga qo\'shilmaydi.' +
+        '  </div>' +
+        '</div>';
+
+      b.querySelector('#fs-back').addEventListener('click', function () { renderFocus(b, regCleanup); });
+    }).catch(function (e) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Statistika yuklanmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  function renderFocus(b, regCleanup) {
+    if (!ipc) { b.innerHTML = '<div class="pnl-empty">IPC mavjud emas</div>'; return; }
+    Promise.all([
+      ipc.invoke('focus-get'),
+      ipc.invoke('subscription-get').catch(function(){ return null; }),
+      ipc.invoke('usage-get').catch(function(){ return null; })
+    ]).then(function (res) {
+      var focus = res[0] || {};
+      var sub = res[1];
+      var usage = res[2];
+      var canUse = !!focus.canUseFocus;
+      var active = focus.activeSession;
+
+      if (active && active.status === 'active') {
+        var endsAt = Number(active.endsAt || 0);
+        b.innerHTML =
+          '<div class="pnl-section">' +
+          '  <div class="pnl-section-h">FAOL SESSIYA</div>' +
+          '  <div style="text-align:center;padding:24px 0;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);border-radius:12px;margin-bottom:14px">' +
+          '    <div style="font-size:11px;letter-spacing:3px;color:#7fffcf">QOLGAN VAQT</div>' +
+          '    <div id="fc-timer" style="font-size:52px;font-weight:900;color:#eaf0fb;letter-spacing:-2px;margin-top:8px;font-variant-numeric:tabular-nums">--:--</div>' +
+          '  </div>' +
+          '  <div style="display:flex;gap:8px">' +
+          '    <button class="pnl-btn ghost" id="fc-pause" style="flex:1">⏸ Pauza</button>' +
+          '    <button class="pnl-btn ghost" id="fc-resume" style="flex:1">▶ Davom</button>' +
+          '    <button class="pnl-btn danger" id="fc-stop" style="flex:1">■ To\'xtatish</button>' +
+          '  </div>' +
+          '  <button class="pnl-btn ghost" id="fc-stats" style="width:100%;margin-top:8px">📊 Statistika</button>' +
+          '</div>' +
+          '<div id="fc-blocklist"></div>';
+        // Jonli timer — har sekundda yangilanadi
+        var timerEl = b.querySelector('#fc-timer');
+        var tick = function () {
+          var remain = Math.max(0, endsAt - Date.now());
+          var sec = Math.floor(remain / 1000);
+          var h = Math.floor(sec / 3600);
+          var mm = Math.floor((sec % 3600) / 60);
+          var ss = sec % 60;
+          timerEl.textContent = (h > 0 ? h + ':' : '') + String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+        };
+        tick();
+        var timerInt = setInterval(tick, 1000);
+        if (typeof regCleanup === 'function') regCleanup(function () { clearInterval(timerInt); });
+        b.querySelector('#fc-pause').addEventListener('click', function () { ipc.invoke('focus-pause').then(function(){ renderFocus(b, regCleanup); }); });
+        b.querySelector('#fc-resume').addEventListener('click', function () { ipc.invoke('focus-resume').then(function(){ renderFocus(b, regCleanup); }); });
+        b.querySelector('#fc-stats').addEventListener('click', function () {
+          clearInterval(timerInt);
+          renderFocusStats(b, regCleanup);
+        });
+        b.querySelector('#fc-stop').addEventListener('click', function () {
+          if (!confirm('Focus sessiyasini to\'xtatishga ishonchingiz komilmi?')) return;
+          ipc.invoke('focus-stop').then(function(){ renderFocus(b, regCleanup); });
+        });
+        renderFocusBlocklist(b.querySelector('#fc-blocklist'));
+        return;
+      }
+
+      if (!canUse) {
+        b.innerHTML =
+          '<div class="pnl-section">' +
+          '  <div style="text-align:center;padding:30px 20px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.25);border-radius:12px">' +
+          '    <div style="font-size:38px;margin-bottom:12px">👑</div>' +
+          '    <div style="font-size:15px;font-weight:700;color:#FFD98A;margin-bottom:8px">Focus Mode — Pro imkoniyat</div>' +
+          '    <div style="color:#a5b1c8;font-size:12px;line-height:1.6;margin-bottom:18px">Cheklanmagan AI tahlili va Focus rejimini olish uchun Premium\'ga o\'ting.</div>' +
+          '    <button class="pnl-btn" id="fc-upgrade" style="background:linear-gradient(135deg,#FFD98A,#F5A623);color:#2a1a00">Premium olish</button>' +
+          '  </div>' +
+          '</div>';
+        b.querySelector('#fc-upgrade').addEventListener('click', function () {
+          if (ipc.send) ipc.send('open-premium');
+          close();
+        });
+        return;
+      }
+
+      b.innerHTML =
+        '<div class="pnl-section">' +
+        '  <div class="pnl-section-h">YANGI FOCUS SESSIYASI</div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">Davomiylik</div>' +
+        '      <div class="pnl-row-desc">Necha daqiqa focus rejimida ishlaysiz</div>' +
+        '    </div>' +
+        '    <select class="pnl-select" id="fc-dur">' +
+        '      <option value="30">30 daqiqa</option>' +
+        '      <option value="45" selected>45 daqiqa</option>' +
+        '      <option value="60">1 soat</option>' +
+        '      <option value="90">1.5 soat</option>' +
+        '      <option value="120">2 soat</option>' +
+        '    </select>' +
+        '  </div>' +
+        '  <div class="pnl-row">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">Rejim</div>' +
+        '      <div class="pnl-row-desc">Hozir boshlash yoki jadval bilan</div>' +
+        '    </div>' +
+        '    <select class="pnl-select" id="fc-mode">' +
+        '      <option value="start-now" selected>Hozir boshlash</option>' +
+        '      <option value="scheduled">Jadval bo\'yicha</option>' +
+        '    </select>' +
+        '  </div>' +
+        '  <div class="pnl-row" id="fc-time-row" style="display:none">' +
+        '    <div class="pnl-row-info">' +
+        '      <div class="pnl-row-title">Boshlash vaqti</div>' +
+        '    </div>' +
+        '    <input class="pnl-input" id="fc-time" type="time" />' +
+        '  </div>' +
+        '  <div style="margin-top:18px">' +
+        '    <button class="pnl-btn" id="fc-start" style="width:100%;padding:12px">🎯 Focus\'ni boshlash</button>' +
+        '    <button class="pnl-btn ghost" id="fc-stats" style="width:100%;padding:10px;margin-top:8px">📊 Statistika</button>' +
+        '  </div>' +
+        '  <div style="margin-top:14px;font-size:11px;color:#6b8a80;line-height:1.6">Focus davomida ijtimoiy tarmoqlar, qisqa videolar va o\'yin saytlari bloklanadi. Ta\'lim, hujjatlar va kodlash saytlari ochiq qoladi.</div>' +
+        '</div>' +
+        '<div id="fc-blocklist"></div>';
+
+      b.querySelector('#fc-mode').addEventListener('change', function (e) {
+        b.querySelector('#fc-time-row').style.display = e.target.value === 'scheduled' ? 'flex' : 'none';
+      });
+      b.querySelector('#fc-stats').addEventListener('click', function () { renderFocusStats(b, regCleanup); });
+      b.querySelector('#fc-start').addEventListener('click', function () {
+        var mode = b.querySelector('#fc-mode').value;
+        var dur = Number(b.querySelector('#fc-dur').value) || 45;
+        var t = b.querySelector('#fc-time').value;
+        ipc.invoke('focus-start', {
+          mode: mode,
+          durationMinutes: dur,
+          startTime: mode === 'scheduled' ? t : null,
+          repeat: 'none'
+        }).then(function (r) {
+          if (r && r.ok) renderFocus(b, regCleanup);
+          else alert('Xato: ' + ((r && r.error) || 'Focus boshlanmadi'));
+        });
+      });
+      renderFocusBlocklist(b.querySelector('#fc-blocklist'));
+    }).catch(function (e) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Focus holati yuklanmadi: ' + esc(e.message || e) + '</div>';
+    });
+  }
+
+  /* ── SAQLANGAN PAROLLAR ──────────────────────────────────────────
+     Parollar main process'da OS shifrlash bilan saqlanadi (Windows DPAPI).
+     Bu panel faqat ro'yxatni ko'rsatadi; parol matni "ko'rsatish" bosilganda
+     bittalab so'raladi va hech qayerda keshlanmaydi. */
+  function renderPasswords(b) {
+    var API = window.niexPasswords;
+    if (!API) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">🔐</div>Parol menejeri mavjud emas — brauzerni qayta ishga tushiring</div>';
+      return;
+    }
+
+    var query = '';
+    var shown = {};   // id -> ochilgan parol (faqat xotirada, panel yopilsa yo'qoladi)
+
+    function draw() {
+      Promise.all([API.status(), API.list()]).then(function (res) {
+        var st = res[0] || {}, list = res[1] || [];
+
+        var warn = st.encryptionAvailable ? '' :
+          '<div style="padding:12px 14px;border-radius:10px;background:rgba(255,138,152,.1);' +
+          'border:1px solid rgba(255,138,152,.3);color:#ff8a98;font-size:12px;margin-bottom:14px">' +
+          '⚠️ Tizim shifrlashi mavjud emas — xavfsizlik uchun parollar saqlanmaydi.</div>';
+
+        var filtered = list.filter(function (p) {
+          if (!query) return true;
+          var q = query.toLowerCase();
+          return (p.host || '').toLowerCase().indexOf(q) >= 0 ||
+                 (p.username || '').toLowerCase().indexOf(q) >= 0;
+        });
+
+        var rows = filtered.map(function (p) {
+          var opened = shown[p.id];
+          return '<div class="pnl-row" data-pw-row="' + esc(p.id) + '">' +
+            '  <div class="pnl-row-info" style="min-width:0">' +
+            '    <div class="pnl-row-title">' + esc(p.host) + '</div>' +
+            '    <div class="pnl-row-desc">' + esc(p.username || '(foydalanuvchi nomisiz)') + '</div>' +
+            '    <div style="margin-top:6px;font-family:monospace;font-size:12px;color:' +
+                   (opened ? '#7fffcf' : '#6b8a80') + '">' +
+                   (opened ? esc(opened) : '••••••••••') + '</div>' +
+            '  </div>' +
+            '  <div style="display:flex;gap:6px;align-items:center">' +
+            '    <button class="pnl-btn ghost" data-pw-show="' + esc(p.id) + '" style="padding:6px 10px;font-size:11px">' +
+                   (opened ? 'Yashirish' : 'Ko\'rsatish') + '</button>' +
+            '    <button class="pnl-btn ghost" data-pw-copy="' + esc(p.id) + '" style="padding:6px 10px;font-size:11px">Nusxa</button>' +
+            '    <button class="pnl-btn danger" data-pw-del="' + esc(p.id) + '" style="padding:6px 10px;font-size:11px">✕</button>' +
+            '  </div>' +
+            '</div>';
+        }).join('');
+
+        b.innerHTML = warn +
+          '<div class="pnl-section">' +
+          '  <div class="pnl-section-h">SAQLANGAN PAROLLAR (' + list.length + ')</div>' +
+          '  <input class="pnl-input" id="pw-q" placeholder="Sayt yoki foydalanuvchi bo\'yicha qidirish…" ' +
+          '         value="' + esc(query) + '" style="width:100%;margin-bottom:12px" />' +
+          (rows || '<div class="pnl-empty"><div class="pnl-empty-ic">🔐</div>' +
+             (query ? 'Hech narsa topilmadi' : 'Hali parol saqlanmagan.<br>' +
+             '<span style="font-size:11px;color:#6b8a80">Saytga kirganingizda brauzer saqlashni taklif qiladi.</span>') +
+             '</div>') +
+          '</div>' +
+          (list.length ? '<div class="pnl-section">' +
+            '<button class="pnl-btn danger" id="pw-clear" style="width:100%">Barcha parollarni o\'chirish</button>' +
+            '</div>' : '') +
+          '<div style="margin-top:12px;font-size:11px;color:#6b8a80;line-height:1.6">' +
+          'Parollar qurilmangizda operatsion tizim shifrlashi bilan saqlanadi va ' +
+          'serverga yuborilmaydi. Fayl nusxalab olinsa ham boshqa kompyuterda ochilmaydi.' +
+          '</div>';
+
+        var q = b.querySelector('#pw-q');
+        if (q) {
+          q.addEventListener('input', function (e) { query = e.target.value; });
+          q.addEventListener('keyup', function (e) { if (e.key === 'Enter') draw(); });
+          q.addEventListener('blur', draw);
+        }
+
+        Array.prototype.forEach.call(b.querySelectorAll('[data-pw-show]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-pw-show');
+            if (shown[id]) { delete shown[id]; draw(); return; }
+            API.reveal(id).then(function (r) {
+              if (r && r.ok) { shown[id] = r.password; draw(); }
+              else alert('Ochib bo\'lmadi: ' + ((r && r.error) || 'xato'));
+            });
+          });
+        });
+
+        Array.prototype.forEach.call(b.querySelectorAll('[data-pw-copy]'), function (btn) {
+          btn.addEventListener('click', function () {
+            API.reveal(btn.getAttribute('data-pw-copy')).then(function (r) {
+              if (!r || !r.ok) return alert('Ochib bo\'lmadi');
+              navigator.clipboard.writeText(r.password).then(function () {
+                var old = btn.textContent; btn.textContent = '✓';
+                setTimeout(function () { btn.textContent = old; }, 1200);
+              }).catch(function () {});
+            });
+          });
+        });
+
+        Array.prototype.forEach.call(b.querySelectorAll('[data-pw-del]'), function (btn) {
+          btn.addEventListener('click', function () {
+            if (!confirm('Ushbu parolni o\'chirasizmi?')) return;
+            API.remove(btn.getAttribute('data-pw-del')).then(draw);
+          });
+        });
+
+        var clr = b.querySelector('#pw-clear');
+        if (clr) clr.addEventListener('click', function () {
+          if (!confirm('BARCHA saqlangan parollar o\'chiriladi. Davom etasizmi?')) return;
+          API.removeAll().then(function () { shown = {}; draw(); });
+        });
+      }).catch(function (e) {
+        b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Parollar yuklanmadi: ' + esc(e.message || e) + '</div>';
+      });
+    }
+
+    draw();
+  }
+
+  function renderParent(b, regCleanup) {
+    // Classic bilan AYNAN BIR XIL service — parent-control-supabase.js dan.
+    // Classic'da qo'shilgan farzand shu yerda ham 10 sekundlik pollingda ko'rinadi.
+    if (!window.parentControl) {
+      b.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">⚠️</div>Parent Control xizmati yuklanmagan (parent-control-supabase.js)</div>';
+      return;
+    }
+    // Auth gate'siz — parentControl subscriptions bo'sh ma'lumot qaytarsa
+    // "ulanmagan" deb ko'rinadi. Kirish taklifi pastda ko'rinadi.
+    // Bu timing va kalit nomlashuv muammolarini butunlay yo'q qiladi.
+
+    // Static shell — form o'zgarmaydi, faqat ro'yxatlar refresh bo'ladi
+    b.innerHTML =
+      '<div class="pnl-section" id="pc-children-sec">' +
+      '  <div class="pnl-section-h">FARZANDLAR</div>' +
+      '  <div id="pc-children-list"><div class="pnl-empty"><div class="pnl-empty-ic">⌛</div>Yuklanmoqda...</div></div>' +
+      '</div>' +
+      '<div class="pnl-section">' +
+      '  <div class="pnl-section-h">FARZAND QO\'SHISH</div>' +
+      '  <div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '    <input class="pnl-input" id="pc-email" type="email" placeholder="farzand@example.com" style="flex:1;min-width:180px" />' +
+      '    <button class="pnl-btn" id="pc-add">+ Taklif yuborish</button>' +
+      '  </div>' +
+      '  <div id="pc-add-status" style="margin-top:10px;font-size:11px;min-height:16px"></div>' +
+      '  <div style="margin-top:8px;font-size:11px;color:#6b8a80;line-height:1.5">Farzand emaildagi 6-xonali kodni sizga bersin. Kodni pastda o\'sha farzand qatorida kiritib "Tasdiqlash" bosing.</div>' +
+      '</div>' +
+      '<div class="pnl-section" id="pc-alerts-sec">' +
+      '  <div class="pnl-section-h" id="pc-alerts-h">SIGNALLAR</div>' +
+      '  <div id="pc-alerts-list"><div class="pnl-empty"><div class="pnl-empty-ic">⌛</div>Yuklanmoqda...</div></div>' +
+      '</div>';
+
+    // Add-child form (static, faqat 1 marta ulanadi)
+    b.querySelector('#pc-add').addEventListener('click', function () {
+      var email = b.querySelector('#pc-email').value.trim();
+      var status = b.querySelector('#pc-add-status');
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+        status.textContent = 'To\'g\'ri email kiriting'; status.style.color = '#ff8a98'; return;
+      }
+      status.textContent = 'Yuborilmoqda...'; status.style.color = '#7fffcf';
+      window.parentControl.requestAddChild(email).then(function (r) {
+        if (r && r.ok) {
+          // Backend `emailSent` / `deliveredToBrowser` bayroqlarini qaytaradi.
+          // Avval ular e'tiborsiz qoldirilardi — email ketmasa ham "yuborildi"
+          // deb ko'rsatilar, foydalanuvchi esa kodni kutib qolardi.
+          if (r.emailSent) {
+            status.textContent = '✓ Kod ' + email + ' emailiga yuborildi (10 daqiqa amal qiladi). Farzand kodni sizga bersin.';
+            status.style.color = '#00E5A0';
+          } else if (r.deliveredToBrowser) {
+            status.textContent = '⚠ Email jo\'natilmadi' + (r.emailError ? ' (' + r.emailError + ')' : '') +
+              '. Kod farzandning Niex brauzeriga bildirishnoma sifatida yuborildi — o\'sha yerdan olsin.';
+            status.style.color = '#FFB86B';
+          } else {
+            status.textContent = '⚠ Kod yaratildi, lekin yetkazilmadi' + (r.emailError ? ': ' + r.emailError : '') + '.';
+            status.style.color = '#FFB86B';
+          }
+          b.querySelector('#pc-email').value = '';
+        } else {
+          status.textContent = 'Xato: ' + ((r && r.error) || 'noma\'lum');
+          status.style.color = '#ff8a98';
+        }
+      });
+    });
+
+    // Farzandlar ro'yxati — LIVE subscription (Classic bilan bir xil polling)
+    //
+    // MUHIM: ro'yxat har 10 soniyada butunlay qayta chiziladi, kod kiritish
+    // maydoni esa ro'yxat ICHIDA. Himoyasiz qoldirilsa foydalanuvchi kod
+    // yozayotganda maydon o'chib ketadi — "qotib qoladi" ko'rinishi shundan.
+    // Yechim: (1) fokus ro'yxat ichida bo'lsa qayta chizishni o'tkazib
+    // yuboramiz, (2) ma'lumot o'zgarmagan bo'lsa umuman tegmaymiz,
+    // (3) baribir chizilsa yozilgan qiymatlar tiklanadi.
+    var lastChildrenSig = null;
+
+    function drawChildren(list) {
+      var host = b.querySelector('#pc-children-list');
+      if (!host) return;
+      var count = list.length;
+      var hEl = b.querySelector('#pc-children-sec .pnl-section-h');
+      if (hEl) hEl.textContent = 'FARZANDLAR (' + count + ')';
+
+      // (1) Foydalanuvchi shu ro'yxat ichida yozayotgan bo'lsa — tegmaymiz
+      var act = document.activeElement;
+      if (act && host.contains(act) && act.tagName === 'INPUT') return;
+
+      // (2) Ma'lumot o'zgarmagan bo'lsa DOM'ga tegmaymiz (keraksiz jank yo'q)
+      var sig = list.map(function (c) {
+        return (c.childEmail || c.childUid || '') + ':' + (c.status || '');
+      }).join(',');
+      if (sig === lastChildrenSig) return;
+      lastChildrenSig = sig;
+
+      // (3) Yozilgan kodlarni saqlab qolamiz
+      var typed = {};
+      Array.prototype.forEach.call(host.querySelectorAll('[data-verify-email]'), function (inp) {
+        if (inp.value) typed[inp.getAttribute('data-verify-email')] = inp.value;
+      });
+
+      if (count === 0) {
+        host.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">👨‍👧</div>Hech qanday farzand ulanmagan</div>';
+        return;
+      }
+      host.innerHTML = list.map(function (c) {
+        var email = c.childEmail || c.childName || '';
+        var uid = c.childUid || email;
+        var st = c.status || 'pending';
+        var isActive = st === 'active' || st === 'verified';
+        return '<div class="pnl-row">' +
+          '  <div class="pnl-row-info">' +
+          '    <div class="pnl-row-title">' + esc(email) + '</div>' +
+          '    <div class="pnl-row-desc">Holat: ' + (isActive
+            ? '<span style="color:#00E5A0">✓ Faol</span>'
+            : '<span style="color:#FFD98A">⏳ Kutilmoqda</span>') + '</div>' +
+          '  </div>' +
+          (isActive ? '' :
+            '<div style="display:flex;gap:6px;align-items:center">' +
+            '  <input class="pnl-input" data-verify-email="' + esc(uid) + '" placeholder="Kod" style="width:90px" />' +
+            '  <button class="pnl-btn" data-verify="' + esc(uid) + '">Tasdiqlash</button>' +
+            '</div>'
+          ) +
+          '  <button class="pnl-btn danger" data-revoke="' + esc(uid) + '" title="Olib tashlash">✕</button>' +
+          '</div>';
+      }).join('');
+
+      // Qayta chizishdan oldin yozilgan kodlarni tiklaymiz
+      Array.prototype.forEach.call(host.querySelectorAll('[data-verify-email]'), function (inp) {
+        var k = inp.getAttribute('data-verify-email');
+        if (typed[k]) inp.value = typed[k];
+      });
+
+      Array.prototype.forEach.call(host.querySelectorAll('[data-verify]'), function (btn) {
+        btn.addEventListener('click', function () {
+          var uid = btn.dataset.verify;
+          var codeInput = host.querySelector('[data-verify-email="' + uid + '"]');
+          var code = codeInput && codeInput.value.trim();
+          if (!code) return alert('Kod kiriting');
+          btn.disabled = true; btn.textContent = '⌛';
+          window.parentControl.verifyAddChild(uid, code).then(function (r) {
+            btn.disabled = false; btn.textContent = 'Tasdiqlash';
+            if (!r || !r.ok) alert('Xato: ' + ((r && r.error) || 'Kod noto\'g\'ri'));
+            // Muvaffaqiyatli bo'lsa keyingi poll natijasida holat "Faol"ga o'zgaradi
+          });
+        });
+      });
+      Array.prototype.forEach.call(host.querySelectorAll('[data-revoke]'), function (btn) {
+        btn.addEventListener('click', function () {
+          var uid = btn.dataset.revoke;
+          if (!confirm(uid + ' — ro\'yxatdan olib tashlash?')) return;
+          window.parentControl.removeChild(uid).then(function (r) {
+            if (r && !r.ok) alert('Xato: ' + (r.error || 'O\'chirilmadi'));
+          });
+        });
+      });
+    }
+
+    // Oxirgi chizilgan holat imzosi — ma'lumot o'zgarmagan bo'lsa DOM'ga
+    // tegilmaydi. Sabab: signallar ro'yxati katta bo'lishi mumkin (60+), va
+    // uni har 10 soniyada qayta qurish (har element uchun tugma + listener)
+    // interfeysni qotirib qo'yardi — yozayotgan matn yo'qolardi.
+    var lastAlertsSig = null;
+
+    function drawAlerts(payload) {
+      var host = b.querySelector('#pc-alerts-list');
+      var hEl = b.querySelector('#pc-alerts-h');
+      if (!host) return;
+      var list = payload && payload.list ? payload.list : [];
+      var unread = payload ? (payload.unread || 0) : 0;
+      if (hEl) hEl.textContent = 'SIGNALLAR (' + list.length + (unread > 0 ? ' · ' + unread + ' yangi' : '') + ')';
+
+      // O'zgarmagan bo'lsa qayta chizmaymiz
+      var sig = list.length + '|' + unread + '|' + list.slice(0, 30).map(function (a) {
+        return (a.id || '') + ':' + (a.read ? 1 : 0);
+      }).join(',');
+      if (sig === lastAlertsSig) return;
+      lastAlertsSig = sig;
+
+      if (list.length === 0) {
+        host.innerHTML = '<div class="pnl-empty"><div class="pnl-empty-ic">🔕</div>Yangi signal yo\'q</div>';
+        return;
+      }
+      host.innerHTML = list.slice(0, 30).map(function (a) {
+        var t = a.createdAt ? new Date(a.createdAt).toLocaleString() : '';
+        var badge = a.category ? '<span style="font-size:9px;letter-spacing:1px;color:#7fffcf;background:rgba(0,229,160,.1);padding:2px 6px;border-radius:4px;margin-right:6px">' + esc(String(a.category).toUpperCase()) + '</span>' : '';
+        return '<div class="pnl-row" style="' + (a.read ? '' : 'border-left:3px solid #FF4757;padding-left:10px') + '">' +
+          '  <div class="pnl-row-info">' +
+          '    <div class="pnl-row-title">' + badge + esc(a.childEmail || a.childName || 'Farzand') + '</div>' +
+          '    <div class="pnl-row-desc">' + esc(a.reason || a.searchQuery || a.url || '') + '</div>' +
+          '    <div style="font-size:10px;color:#6b7b94;margin-top:4px">' + esc(a.device || '') + (a.device ? ' · ' : '') + esc(t) + '</div>' +
+          (a.read ? '' : '    <div style="margin-top:6px"><button class="pnl-btn ghost" data-ack-id="' + esc(a.id) + '" style="padding:4px 10px;font-size:10px">O\'qilgan qilish</button></div>') +
+          '  </div>' +
+          '</div>';
+      }).join('');
+      Array.prototype.forEach.call(host.querySelectorAll('[data-ack-id]'), function (btn) {
+        btn.addEventListener('click', function () {
+          window.parentControl.markNotificationRead(btn.dataset.ackId);
+        });
+      });
+    }
+
+    // Aslida ikkala subscription — Classic bilan aynan bir xil chaqiruvlar.
+    var unsubC = window.parentControl.subscribeChildren(drawChildren);
+    var unsubN = window.parentControl.subscribeNotifications(drawAlerts);
+    if (typeof regCleanup === 'function') { regCleanup(unsubC); regCleanup(unsubN); }
+  }
+
+  var PANELS = {
+    about:         { title: 'Niex haqida',        render: renderAbout },
+    profile:       { title: 'Profil',             render: renderProfile },
+    settings:      { title: 'Sozlamalar',         render: renderSettings },
+    links:         { title: 'Tezkor havolalar',   render: renderLinks },
+    history:       { title: 'Tarix',              render: renderHistory },
+    feedback:      { title: 'Fikr-mulohaza',      render: renderFeedback },
+    notifications: { title: 'Bildirishnomalar',   render: renderNotifications },
+    extensions:    { title: 'Extensions',         render: renderExtensions },
+    focus:         { title: 'Focus Mode',         render: renderFocus },
+    parent:        { title: 'Farzand boshqaruvi', render: renderParent },
+    passwords:     { title: 'Saqlangan parollar', render: renderPasswords }
+  };
+})();
+</script>
+
+<!-- ── PROFIL SINXRONIZATSIYASI ─────────────────────────────────────────
+     Qurilmaning bulutdagi `account_email` maydoni JORIY profilga mos
+     bo'lishi SHART: ota-ona signallari (`/api/v1/parent/alert`) aynan shu
+     maydon bo'yicha kimga yuborilishini aniqlaydi. Mos kelmasa server
+     `skipped:"no-parent"` qaytaradi va signal jimgina yo'qoladi.
+
+     Ilgari bu sinxronizatsiya faqat safenethome.html da bor edi. Garage'da
+     profil almashtirilganda `storage` hodisasi O'SHA oynada ishlamaydi —
+     natijada qurilma eski hisobda qolib ketardi. Shu sabab bu yerga ham
+     qo'shildi (safenethome bilan aynan bir xil mantiq). -->
+<script>
+(function () {
+  function pick(o, keys) {
+    if (!o) return '';
+    for (var i = 0; i < keys.length; i++) {
+      var v = o[keys[i]];
+      if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+    }
+    return '';
+  }
+  function readProfile() {
+    var p = null, u = null;
+    try { p = JSON.parse(localStorage.getItem('sn_user_profile') || 'null'); } catch (e) {}
+    try { u = JSON.parse(localStorage.getItem('sn_user') || 'null'); } catch (e) {}
+    if (!p && !u) return null;
+    p = p || {};
+    var pi = p.personalInfo || p.profile || p;
+    var email = pick(p, ['email']) || pick(pi, ['email']) || (u && (u.e || u.email));
+    if (!email) return null;
+    var fn = pick(pi, ['firstName', 'first_name']);
+    var ln = pick(pi, ['lastName', 'last_name']);
+    var nm = [fn, ln].filter(Boolean).join(' ') || pick(p, ['name']) || (u && (u.n || u.name)) || '';
+    var interests = Array.isArray(p.interests) ? p.interests
+      : (Array.isArray(pi.interests) ? pi.interests : []);
+    return {
+      email: String(email).toLowerCase(),
+      name: nm,
+      firstName: fn || '',
+      lastName: ln || '',
+      age: pick(pi, ['age']),
+      phone: pick(pi, ['phone', 'phoneNumber']) || '',
+      role: pick(pi, ['role']) || 'user',
+      interests: interests,
+      profileCompleted: !!p.profileCompleted
+    };
+  }
+  var _last = '';
+  window._niexSyncProfile = function () {
+    try {
+      var prof = readProfile();
+      if (!prof) return;
+      var sig = JSON.stringify(prof);
+      if (sig === _last) return;          // o'zgarmasa qayta yubormaymiz
+      _last = sig;
+      if (window._ipc && window._ipc.send) window._ipc.send('account-profile', prof);
+    } catch (e) { console.warn('[niex] profile sync:', e); }
+  };
+  window.addEventListener('DOMContentLoaded', function () { setTimeout(window._niexSyncProfile, 1200); });
+  window.addEventListener('storage', function (e) {
+    if (e && e.key && e.key.indexOf('sn_') === 0) window._niexSyncProfile();
+  });
+  // Profil shu oynada almashtirilsa `storage` ishlamaydi — davriy tekshiruv
+  setInterval(function () { window._niexSyncProfile(); }, 5000);
+  setTimeout(window._niexSyncProfile, 300);
+})();
+</script>
+</body>
+</html>

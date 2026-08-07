@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Niex — Tezkor havolalar</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #0A0E1A;
+  --panel: rgba(15, 23, 42, 0.78);
+  --panel-strong: rgba(15, 23, 42, 0.96);
+  --text: #E8F0FE;
+  --muted: #94A3B8;
+  --border: rgba(255,255,255,0.08);
+  --accent: #00E5A0;
+  --danger: #FF4757;
+  --warn: #FF7A45;
+  --blue: #3B82F6;
+  --purple: #8B5CF6;
+}
+html, body { background: var(--bg); color: var(--text); font-family: -apple-system,'Segoe UI',sans-serif; min-height: 100vh; }
+body {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(0,229,160,0.15), transparent 14%),
+    radial-gradient(circle at 80% 20%, rgba(139,92,246,0.12), transparent 16%),
+    linear-gradient(180deg, #0A0E1A 0%, #08101C 100%);
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,14,26,0.6);
+  backdrop-filter: blur(20px);
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #00E5A0, #3B82F6);
+  border-radius: 14px;
+  display: grid; place-items: center;
+  font-size: 22px;
+}
+.brand-title { font-size: 20px; font-weight: 800; }
+.brand-sub { font-size: 12px; color: var(--muted); }
+.topbar-actions { display: flex; gap: 10px; }
+.btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: inherit;
+}
+.btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.btn-primary {
+  background: linear-gradient(135deg, #00E5A0, #00C589);
+  border-color: transparent;
+  color: #03130F;
+  font-weight: 800;
+  box-shadow: 0 10px 30px rgba(0,229,160,0.35);
+}
+.btn-primary:hover { box-shadow: 0 14px 40px rgba(0,229,160,0.5); transform: translateY(-2px); }
+.btn-warn { background: rgba(255,122,69,0.15); border-color: rgba(255,122,69,0.3); color: #FFB088; }
+.btn-danger { background: rgba(255,71,87,0.15); border-color: rgba(255,71,87,0.3); color: #FF8C9A; }
+.btn-danger:hover { background: rgba(255,71,87,0.25); }
+.btn-icon { padding: 10px; min-width: 40px; }
+
+.container { max-width: 880px; margin: 32px auto; padding: 0 28px; }
+.hero {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.hero h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #00E5A0, #3B82F6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero p { color: var(--muted); font-size: 14px; }
+
+/* Add form */
+.add-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(20px);
+}
+.add-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.add-row { display: grid; grid-template-columns: 1.2fr 2fr 110px 110px auto; gap: 10px; align-items: center; }
+.add-row input, .add-row select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+.add-row input:focus, .add-row select:focus { border-color: var(--accent); }
+.emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  gap: 4px;
+  margin-top: 10px;
+  max-height: 130px;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.emoji-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.emoji-btn:hover { background: rgba(0,229,160,0.2); border-color: var(--accent); transform: scale(1.15); }
+.emoji-btn.active { background: rgba(0,229,160,0.2); border-color: var(--accent); }
+
+/* List */
+.section-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 26px 0 14px;
+  display: flex; align-items: center; gap: 10px;
+  justify-content: space-between;
+}
+.section-title .count { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+.list-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: grab;
+  transition: all .2s;
+}
+.item:hover { background: rgba(255,255,255,0.06); border-color: rgba(0,229,160,0.3); }
+.item.dragging { opacity: .5; cursor: grabbing; }
+.item.drag-over { border-color: var(--accent); border-style: dashed; }
+.item-emoji-large {
+  font-size: 24px;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: rgba(0,229,160,0.1);
+  border-radius: 12px;
+}
+.item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.item-name { font-weight: 700; font-size: 14px; }
+.item-url {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-actions { display: flex; gap: 6px; }
+.item-btn {
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  display: grid; place-items: center;
+  transition: all .15s;
+  font-family: inherit;
+}
+.item-btn:hover { color: var(--text); border-color: var(--accent); }
+.item-btn.danger:hover { background: rgba(255,71,87,0.15); border-color: rgba(255,71,87,0.3); color: #FF8C9A; }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.empty-state-icon { font-size: 40px; opacity: .45; margin-bottom: 12px; }
+
+/* Edit modal */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+.modal {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 26px;
+  width: 460px; max-width: 94vw;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+}
+.modal-title { font-size: 17px; font-weight: 800; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+.modal-close {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid; place-items: center;
+  font-size: 16px;
+  font-family: inherit;
+}
+.modal-close:hover { color: var(--text); }
+
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 13px; color: var(--muted); margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+.field input:focus { border-color: var(--accent); }
+.field .emoji-picker { margin-top: 8px; }
+
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: rgba(15,23,42,0.96); border:1px solid var(--border); color: var(--text);
+  padding: 12px 22px; border-radius: 12px; font-size: 13px; font-weight: 600;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+  z-index: 10000;
+  animation: slideUp .3s;
+}
+.toast.success { border-color: var(--accent); color: var(--accent); }
+.toast.error { border-color: var(--danger); color: #FF8C9A; }
+@keyframes slideUp { from{ transform: translate(-50%, 30px); opacity:0; } to { transform: translate(-50%, 0); opacity:1; }}
+
+@media (max-width: 720px) {
+  .topbar { padding: 14px 18px; }
+  .container { padding: 0 16px; }
+  .add-row { grid-template-columns: 1fr; }
+  .item { grid-template-columns: 44px 1fr auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">🔗</div>
+    <div>
+      <div class="brand-title">Tezkor havolalar</div>
+      <div class="brand-sub">Bosh sahifa pinlari</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn" onclick="window.close()">← Orqaga</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="hero">
+    <h1>Tezkor havolalarni boshqaring</h1>
+    <p>Qo'shing, o'chirib tashlang, nomini va belgisini o'zgartiring, tartibini o'rnating.</p>
+  </div>
+
+  <!-- Add form -->
+  <div class="add-card">
+    <h2>➕ Yangi havolani qo'shish</h2>
+    <div class="add-row">
+      <input id="add-name" placeholder="Nom (masalan: YouTube)" maxlength="60" />
+      <input id="add-url" placeholder="https://example.com" />
+      <select id="add-color"></select>
+      <input id="add-emoji" placeholder="🔗" maxlength="8" value="🔗" />
+      <button class="btn btn-primary" onclick="addLink()">+ Qo'shish</button>
+    </div>
+    <div class="emoji-picker" id="emoji-picker"></div>
+  </div>
+
+  <!-- List -->
+  <div class="section-title">
+    <span>📋 Barcha havolalar</span>
+    <span class="count" id="count-info">0 ta</span>
+  </div>
+  <div class="list-card" id="link-list" ondragover="onListDragOver(event)" ondrop="onListDrop(event)"></div>
+</div>
+
+<!-- Edit Modal -->
+<div class="overlay" id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-title">
+      <span>✏️ Tahrirlash</span>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="field">
+      <label>Nom</label>
+      <input id="edit-name" maxlength="60" />
+    </div>
+    <div class="field">
+      <label>URL</label>
+      <input id="edit-url" />
+    </div>
+    <div class="field">
+      <label>Belgi (emoji yoki icon)</label>
+      <input id="edit-emoji" maxlength="8" />
+      <div class="emoji-picker" id="edit-emoji-picker"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveEdit()">Saqlash</button>
+      <button class="btn" onclick="closeEditModal()">Bekor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LS_KEY = 'sn_links_v2';
+const COLORS = [
+  { name: 'Yashil', value: '#00E5A0' },
+  { name: "Ko'k", value: '#3B82F6' },
+  { name: 'Binafsha', value: '#8B5CF6' },
+  { name: 'Qizil', value: '#FF4757' },
+  { name: 'Sariq', value: '#FFC857' },
+  { name: 'Pushti', value: '#F472B6' },
+  { name: 'Cyan', value: '#22D3EE' },
+  { name: 'Apelsin', value: '#FF7A45' },
+];
+const EMOJIS = ['📺','📖','📚','💻','🌐','📧','🎵','🎬','🛒','💼','📰','🎮','📷','🎨','🛠️','📊','🎓','✈️','🍔','💬','🔍','📁','📅','⭐','🚀','💎','🏠','📞','💡','🔔','💰','🏆','🎯','🌟','🔥','💪','❤️','👍','🎉','🎁'];
+const DEFAULT_LINKS = [
+  { id: 'def1', name:'YouTube',       url:'https://youtube.com',         emoji:'📺', color:'#FF4757' },
+  { id: 'def2', name:'Wikipedia',     url:'https://wikipedia.org',        emoji:'📖', color:'#3B82F6' },
+  { id: 'def3', name:'Khan Academy',  url:'https://khanacademy.org',      emoji:'📚', color:'#00E5A0' },
+  { id: 'def4', name:'GitHub',        url:'https://github.com',           emoji:'💻', color:'#8B5CF6' },
+  { id: 'def5', name:'Tarjimon',      url:'https://translate.google.com', emoji:'🌐', color:'#FFC857' },
+  { id: 'def6', name:'Gmail',         url:'https://mail.google.com',      emoji:'📧', color:'#FF7A45' },
+];
+
+let links = [];
+let editingId = null;
+let dragSrcId = null;
+
+function loadLinks() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length) { links = arr; return; }
+    }
+  } catch (e) {}
+  try {
+    const oldRaw = localStorage.getItem('sn_links');
+    const old = oldRaw ? JSON.parse(oldRaw) : null;
+    if (Array.isArray(old) && old.length) {
+      links = old.map((l, i) => ({
+        id: 'mig_' + i + '_' + Math.random().toString(36).slice(2,5),
+        name: l.name, url: l.url, emoji: l.emoji || '🔗', color: COLORS[i % COLORS.length].value,
+      }));
+    } else {
+      links = DEFAULT_LINKS.slice();
+    }
+    persist();
+  } catch (e) {
+    links = DEFAULT_LINKS.slice();
+  }
+}
+function persist() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(links)); } catch (e) {}
+  try {
+    if (window._ipc) window._ipc.invoke && window._ipc.invoke('quicklinks-set', links);
+  } catch (e) {}
+}
+
+function init() {
+  const colorSelect = document.getElementById('add-color');
+  COLORS.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.value; opt.textContent = c.name;
+    colorSelect.appendChild(opt);
+  });
+  renderEmojiPickers();
+  loadLinks();
+  render();
+}
+
+function renderEmojiPickers() {
+  const picker = document.getElementById('emoji-picker');
+  picker.innerHTML = '';
+  EMOJIS.forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'emoji-btn'; b.textContent = e;
+    b.onclick = () => { document.getElementById('add-emoji').value = e; };
+    picker.appendChild(b);
+  });
+  const editPicker = document.getElementById('edit-emoji-picker');
+  editPicker.innerHTML = '';
+  EMOJIS.forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'emoji-btn'; b.textContent = e;
+    b.onclick = () => { document.getElementById('edit-emoji').value = e; };
+    editPicker.appendChild(b);
+  });
+}
+
+function showToast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type?' '+type:'');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+function render() {
+  const list = document.getElementById('link-list');
+  document.getElementById('count-info').textContent = links.length + ' ta';
+  if (!links.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔗</div>Hozircha havolalar yo\'q. Yuqorida "+ Qo\'shish" tugmasini bosing.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  for (const l of links) {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.draggable = true;
+    div.dataset.id = l.id;
+    div.innerHTML = `
+      <div class="item-emoji-large" style="background:${l.color ? l.color+'22' : 'rgba(0,229,160,0.1)'}; color:${l.color||'var(--accent)'}">${l.emoji||'🔗'}</div>
+      <div class="item-info">
+        <div class="item-name">${escapeHTML(l.name)}</div>
+        <div class="item-url">${escapeHTML(l.url)}</div>
+      </div>
+      <div class="item-actions">
+        <button class="item-btn" onclick="openEditModal('${l.id}')" title="Tahrirlash">✏️</button>
+        <button class="item-btn danger" onclick="deleteLink('${l.id}')" title="O'chirish">🗑</button>
+      </div>
+    `;
+    div.addEventListener('dragstart', e => {
+      dragSrcId = l.id;
+      div.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', l.id);
+    });
+    div.addEventListener('dragend', () => div.classList.remove('dragging'));
+    div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', e => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (!draggedId || draggedId === l.id) return;
+      moveItem(draggedId, l.id);
+    });
+    list.appendChild(div);
+  }
+}
+
+function moveItem(srcId, targetId) {
+  const srcIdx = links.findIndex(x => x.id === srcId);
+  const targetIdx = links.findIndex(x => x.id === targetId);
+  if (srcIdx === -1 || targetIdx === -1) return;
+  const [moved] = links.splice(srcIdx, 1);
+  links.splice(targetIdx, 0, moved);
+  persist();
+  render();
+  showToast('↕️ Tartib yangilandi');
+}
+
+function onListDragOver(e) { e.preventDefault(); }
+function onListDrop(e) {
+  e.preventDefault();
+  const draggedId = e.dataTransfer.getData('text/plain');
+  if (!draggedId) return;
+  const srcIdx = links.findIndex(x => x.id === draggedId);
+  if (srcIdx === -1) return;
+  const [moved] = links.splice(srcIdx, 1);
+  links.push(moved);
+  persist(); render();
+  showToast('↕️ Oxiriga ko\'chirildi');
+}
+
+function addLink() {
+  const name = document.getElementById('add-name').value.trim();
+  let url = document.getElementById('add-url').value.trim();
+  const emoji = document.getElementById('add-emoji').value.trim() || '🔗';
+  const color = document.getElementById('add-color').value;
+  if (!name) return showToast('❌ Nom kiriting', 'error');
+  if (!url) return showToast('❌ URL kiriting', 'error');
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  const item = {
+    id: 'l_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6),
+    name: name.slice(0, 60),
+    url: url.slice(0, 500),
+    emoji: emoji.slice(0, 8),
+    color,
+  };
+  links.push(item);
+  persist();
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-url').value = '';
+  document.getElementById('add-emoji').value = '🔗';
+  render();
+  showToast('✅ Qo\'shildi: ' + item.name, 'success');
+}
+
+function deleteLink(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  if (!confirm('"' + link.name + '" havolasini o\'chirib tashlashni xohlaysizmi?')) return;
+  links = links.filter(l => l.id !== id);
+  persist();
+  render();
+  showToast('🗑 O\'chirildi');
+}
+
+function openEditModal(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  editingId = id;
+  document.getElementById('edit-name').value = link.name;
+  document.getElementById('edit-url').value = link.url;
+  document.getElementById('edit-emoji').value = link.emoji || '🔗';
+  document.getElementById('edit-overlay').classList.add('show');
+}
+function closeEditModal() { document.getElementById('edit-overlay').classList.remove('show'); editingId = null; }
+
+function saveEdit() {
+  if (!editingId) return;
+  const link = links.find(l => l.id === editingId);
+  if (!link) return;
+  const name = document.getElementById('edit-name').value.trim();
+  let url = document.getElementById('edit-url').value.trim();
+  const emoji = document.getElementById('edit-emoji').value.trim() || '🔗';
+  if (!name) return showToast('❌ Nom kiriting', 'error');
+  if (!url) return showToast('❌ URL kiriting', 'error');
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  link.name = name.slice(0, 60);
+  link.url = url.slice(0, 500);
+  link.emoji = emoji.slice(0, 8);
+  persist();
+  closeEditModal();
+  render();
+  showToast('✅ Saqlandi', 'success');
+}
+
+function escapeHTML(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+['add-name','add-url'].forEach(id => {
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement && document.activeElement.id === id) addLink();
+  });
+});
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
