@@ -1,6 +1,8 @@
 .env
 .env.local
 dist/
+!dist/NIEX-Browser-Setup-1.0.0-x64.exe
+!dist/NIEX-Browser-Setup-1.0.0-x64.exe.blockmap
 node_modules/
 *.backup
 *.fixed

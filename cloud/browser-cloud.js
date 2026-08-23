@@ -188,14 +188,17 @@ async function validatePromo(data) {
     }));
     log('OK', 'Bulut promo', 'tekshirildi');
     
-    if (r && r.ok && r.result) {
+    if (r && r.ok) {
+      if (r.valid === false) {
+        return { ok: false, error: r.message || 'Promo yaroqsiz' };
+      }
       return {
         ok: true,
-        final_amount: r.result.finalAmount,
-        discount_type: r.result.discountType,
-        discount_value: r.result.discountValue,
-        discount_amount: r.result.discountAmount,
-        original_amount: r.result.originalAmount
+        final_amount: r.final_price,
+        discount_type: r.discount_type,
+        discount_value: r.discount_value,
+        discount_amount: r.discount_amount,
+        original_amount: r.original_price
       };
     }
     return r;
