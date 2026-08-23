@@ -270,12 +270,12 @@ body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"
           <div class="cnum"><span id="card-num">0000 0000 0000 0000</span><button class="copy" id="copy-card">📋 Nusxa</button></div>
           <div class="brow">
             <div><div class="lbl">Karta egasi</div><div class="val" id="card-holder">—</div></div>
-            <div style="text-align:right"><div class="lbl">Summa</div><div class="val" id="card-amount">7 999 so'm</div></div>
+            <div style="text-align:right"><div class="lbl">Summa</div><div class="val" id="card-amount">25 000 so'm</div></div>
           </div>
         </div>
         <div class="pay-info reveal d2">
           <h4>Qanday to'lash kerak?</h4>
-          <div class="step"><div class="num">1</div><div class="stx">Yuqoridagi karta raqamiga <b id="pi-amount">7 999</b> so'm o'tkazing.</div></div>
+          <div class="step"><div class="num">1</div><div class="stx">Yuqoridagi karta raqamiga <b id="pi-amount">25 000</b> so'm o'tkazing.</div></div>
           <div class="step"><div class="num">2</div><div class="stx">To'lov chekini (skrinshot) saqlang.</div></div>
           <div class="step"><div class="num">3</div><div class="stx">"To'ladim" tugmasini bosib, arizani to'ldiring.</div></div>
           <div class="step"><div class="num">4</div><div class="stx">Biz tekshiramiz va Pro darhol faollashadi.</div></div>
@@ -393,15 +393,39 @@ document.getElementById('promo-apply-btn').addEventListener('click', async () =>
   const btn = document.getElementById('promo-apply-btn');
   msg.style.color = 'var(--mut)'; msg.textContent = '⏳ Tekshirilmoqda...';
   btn.disabled = true;
+  
+  const allPlans = ['pro_monthly', 'pro_3months'];
+  const orderedPlans = [currentPlanId, ...allPlans.filter(p => p !== currentPlanId)];
+  let successResult = null;
+  let lastError = null;
+
   try {
-    const r = await window._ipc.invoke('premium-validate-promo', { code, planId: currentPlanId, email: document.getElementById('f-email').value });
-    if (r && r.ok) {
+    for (const pid of orderedPlans) {
+      const r = await window._ipc.invoke('premium-validate-promo', { code, planId: pid, email: document.getElementById('f-email').value });
+      if (r && r.ok) {
+        successResult = { ...r, appliedPlanId: pid };
+        break;
+      } else {
+        lastError = r;
+      }
+    }
+
+    if (successResult) {
+      const r = successResult;
+      if (r.appliedPlanId !== currentPlanId) {
+        const planBtn = document.querySelector(`.plan-sel-btn[data-plan="${r.appliedPlanId}"]`);
+        if (planBtn) {
+           currentPlanId = r.appliedPlanId;
+           currentPlanPrice = Number(planBtn.getAttribute('data-price') || currentPlanPrice);
+        }
+      }
       currentPromo = { code, finalAmount: r.final_amount };
       msg.style.color = 'var(--green1)';
       let dText = r.discount_type === 'percentage' ? `-${r.discount_value}%` : `-${fmt(r.discount_amount)} so'm`;
-      msg.innerHTML = `✅ Maxsus chegirma: <b>${dText}</b>`;
+      msg.innerHTML = `✅ Maxsus chegirma: <b>${dText}</b> (Tarif: ${r.appliedPlanId === 'pro_monthly' ? '1 Oylik' : '3 Oylik'})`;
       document.getElementById('card-amount').innerHTML = `<del style="opacity:0.5">${fmt(r.original_amount)}</del> <span style="color:var(--green1);margin-left:4px">${fmt(r.final_amount)} so'm</span>`;
       document.getElementById('f-amount').value = r.final_amount;
+      document.getElementById('pi-amount').textContent = fmt(r.final_amount);
       if (r.final_amount === 0) {
         document.getElementById('upload-box').style.display = 'none';
         document.getElementById('submit-btn').textContent = '🚀 Bepul faollashtirish';
@@ -410,11 +434,13 @@ document.getElementById('promo-apply-btn').addEventListener('click', async () =>
         document.getElementById('submit-btn').textContent = 'Arizani yuborish';
       }
     } else {
+      const r = lastError;
       currentPromo = null;
       msg.style.color = 'var(--red)';
       msg.textContent = '❌ ' + (r?.error || 'Noto\'g\'ri promo');
       document.getElementById('card-amount').textContent = fmt(currentPlanPrice) + ' so\'m';
       document.getElementById('f-amount').value = currentPlanPrice;
+      document.getElementById('pi-amount').textContent = fmt(currentPlanPrice);
       document.getElementById('upload-box').style.display = '';
       document.getElementById('submit-btn').textContent = 'Arizani yuborish';
     }
