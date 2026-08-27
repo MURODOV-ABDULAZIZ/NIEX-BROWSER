@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="UTF-8"><title>Niex</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0A0E1A;color:#E8F0FE;font-family:-apple-system,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+.tb{position:absolute;top:0;right:0;display:flex;align-items:center;padding:14px 20px;gap:8px}
+.tbtn{display:flex;align-items:center;gap:6px;padding:7px 13px;background:#1A2235;border:1px solid #1E2D45;border-radius:10px;color:#8892B0;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s}
+.tbtn:hover{background:#243044;color:#E8F0FE}
+.av{width:32px;height:32px;background:linear-gradient(135deg,#00E5A0,#3B82F6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#0A0E1A;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.av:hover{border-color:#00E5A0}
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px 40px}
+.logo{text-align:center;margin-bottom:30px}
+.lic{font-size:56px;display:block;margin-bottom:8px;filter:drop-shadow(0 0 18px rgba(0,229,160,.4))}
+.lt{font-size:36px;font-weight:900;background:linear-gradient(135deg,#00E5A0,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ls{font-size:13px;color:#6B7A99;margin-top:5px}
+.sw{width:580px;max-width:92vw;position:relative;margin-bottom:14px}
+.si{width:100%;height:52px;background:#1A2235;border:1.5px solid #1E2D45;border-radius:26px;padding:0 54px 0 20px;font-size:15px;color:#E8F0FE;outline:none;font-family:inherit;transition:all .2s}
+.si::placeholder{color:#4a5568}.si:focus{border-color:#00E5A0;box-shadow:0 0 0 3px rgba(0,229,160,.1);background:#1E2A3D}
+.sg{position:absolute;right:7px;top:7px;width:38px;height:38px;background:linear-gradient(135deg,#00E5A0,#00C885);border:none;border-radius:19px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .2s}
+.sg:hover{transform:scale(1.07);box-shadow:0 0 14px rgba(0,229,160,.4)}
+.qs{width:580px;max-width:92vw;margin-bottom:24px}
+.qh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ql{font-size:10px;color:#4a5568;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.qe{font-size:11px;color:#00E5A0;background:none;border:none;cursor:pointer;padding:3px 8px;border-radius:6px;font-family:inherit}
+.qe:hover{background:rgba(0,229,160,.1)}
+.qg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.qb{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#1A2235;border:1px solid #1E2D45;border-radius:20px;color:#8892B0;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s}
+.qb:hover{background:#243044;color:#E8F0FE;transform:translateY(-1px)}
+.qadd{padding:8px 13px;background:rgba(0,229,160,.06);border:1px dashed rgba(0,229,160,.3);border-radius:20px;color:#00E5A0;font-size:13px;cursor:pointer;font-family:inherit}
+.qadd:hover{background:rgba(0,229,160,.12)}
+.sr{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.sp{display:flex;align-items:center;gap:7px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.15);border-radius:10px;padding:7px 13px;font-size:12px}
+.sdot{width:6px;height:6px;background:#00E5A0;border-radius:50%;animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.sv{font-weight:700;color:#00E5A0}.sk{color:#6B7A99}
+/* MODALS */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);z-index:100;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.md{background:#111827;border:1px solid #1E2D45;border-radius:20px;padding:24px;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.mtt{font-size:17px;font-weight:700}
+.mcl{width:28px;height:28px;background:#1A2235;border:none;border-radius:7px;color:#8892B0;cursor:pointer;font-size:14px;font-family:inherit}
+.mcl:hover{background:#243044;color:#E8F0FE}
+.slb{font-size:10px;color:#4a5568;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px}
+.tr{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#1A2235;border-radius:10px;margin-bottom:7px;border:1px solid #1E2D45}
+.tinfo{display:flex;flex-direction:column;gap:2px}
+.tn{font-size:13px;font-weight:600}.td{font-size:11px;color:#6B7A99}
+.tg{width:40px;height:22px;background:#1E2D45;border-radius:11px;cursor:pointer;position:relative;border:none;transition:background .25s;flex-shrink:0;font-family:inherit}
+.tg.on{background:linear-gradient(135deg,#00E5A0,#00C885)}
+.tg::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:white;border-radius:8px;transition:transform .25s}
+.tg.on::after{transform:translateX(18px)}
+.fi{width:100%;padding:9px 12px;background:#1A2235;border:1px solid #1E2D45;border-radius:9px;color:#E8F0FE;font-size:13px;font-family:inherit;outline:none;margin-bottom:9px}
+.fi:focus{border-color:#00E5A0}
+.flab{font-size:12px;color:#8892B0;margin-bottom:4px;display:block}
+.bp{width:100%;padding:11px;background:linear-gradient(135deg,#00E5A0,#00C885);border:none;border-radius:11px;color:#0A0E1A;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;font-family:inherit}
+.bp:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(0,229,160,.3)}
+.bs{width:100%;padding:10px;background:#1A2235;border:1px solid #1E2D45;border-radius:11px;color:#E8F0FE;font-size:13px;font-weight:600;cursor:pointer;margin-top:5px;font-family:inherit}
+.bs:hover{background:#243044}
+.gb{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:11px;background:white;border:none;border-radius:11px;color:#1a1a1a;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:7px;font-family:inherit}
+.gb:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.dvd{display:flex;align-items:center;gap:10px;margin:13px 0;color:#4a5568;font-size:11px}
+.dvd::before,.dvd::after{content:'';flex:1;height:1px;background:#1E2D45}
+.pav{width:60px;height:60px;background:linear-gradient(135deg,#00E5A0,#3B82F6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#0A0E1A;margin:0 auto 10px}
+.pnm{font-size:17px;font-weight:700;text-align:center;margin-bottom:2px}
+.pem{font-size:12px;color:#6B7A99;text-align:center;margin-bottom:16px}
+.li{display:flex;align-items:center;gap:8px;padding:9px;background:#1A2235;border-radius:9px;margin-bottom:6px;border:1px solid #1E2D45}
+.lie{font-size:17px;width:26px;text-align:center;flex-shrink:0}
+.lin{flex:1;overflow:hidden}
+.linn{font-size:13px;font-weight:600}
+.linu{font-size:10px;color:#6B7A99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ldl{width:24px;height:24px;background:rgba(255,71,87,.1);border:none;border-radius:6px;color:#FF4757;cursor:pointer;font-size:12px;flex-shrink:0;font-family:inherit}
+.ldl:hover{background:rgba(255,71,87,.2)}
+.info-box{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:10px 13px;font-size:12px;color:#00E5A0;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px}
+</style></head><body>
+
+<div class="tb">
+  <button class="tbtn" id="btn-nt">+ Yangi oyna</button>
+  <button class="tbtn" id="btn-feedback">💬 Feedback</button>
+  <button class="tbtn" id="btn-settings">⚙️ Sozlamalar</button>
+  <div class="av" id="av">?</div>
+</div>
+
+<div class="main">
+  <div class="logo">
+    <span class="lic">🛡️</span>
+    <div class="lt">Niex</div>
+    <div class="ls">Xavfsiz va tez brauzer — AI himoyasi bilan</div>
+  </div>
+
+  <div class="sw">
+    <input class="si" id="si" type="text" placeholder="Qidirish yoki URL kiriting..." autocomplete="off" autofocus/>
+    <button class="sg" id="sg">🔍</button>
+  </div>
+
+  <div class="qs">
+    <div class="qh">
+      <span class="ql">Tezkor havolalar</span>
+      <button class="qe" id="btn-ql">✏️ Tahrirlash</button>
+    </div>
+    <div class="qg" id="qg"></div>
+  </div>
+
+  <div class="sr">
+    <div class="sp"><div class="sdot"></div><span class="sk">AI:</span><span class="sv">Faol</span></div>
+    <div class="sp"><span class="sk">Blok sahifa:</span><span class="sv" id="v-bl">0</span></div>
+    <div class="sp"><span class="sk">Blok rasm:</span><span class="sv" id="v-bi">0</span></div>
+    <div class="sp"><span class="sk">Jami:</span><span class="sv" id="v-tot">0</span></div>
+  </div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div class="ov" id="ov-s"><div class="md">
+  <div class="mhd"><div class="mtt">⚙️ Sozlamalar</div><button class="mcl" id="cls-s">✕</button></div>
+
+  <div class="info-box">🛡️ Niex Filter YouTube, DuckDuckGo va barcha saytlarda ishlaydi</div>
+
+  <div class="slb">🌐 Qidiruv tizimi</div>
+  <div class="tr"><div class="tinfo"><div class="tn">DuckDuckGo</div><div class="td">Maxfiy qidiruv (tavsiya)</div></div><button class="tg on" id="t-ddg"></button></div>
+  <div class="tr"><div class="tinfo"><div class="tn">Google</div><div class="td">Google qidiruv</div></div><button class="tg" id="t-gg"></button></div>
+
+  <div class="slb">🛡️ Kontent Himoyasi</div>
+  <div class="tr"><div class="tinfo"><div class="tn">AI URL Tahlili</div><div class="td">Har bir URL ni AI bilan tekshirish</div></div><button class="tg on" id="t-ai"></button></div>
+  <div class="tr"><div class="tinfo"><div class="tn">AI Rasm Tahlili</div><div class="td">Sahifadagi rasmlarni AI bilan tekshirish</div></div><button class="tg on" id="t-img"></button></div>
+  <div class="tr"><div class="tinfo"><div class="tn">YouTube Video Filter</div><div class="td">Video sarlavha va thumbnail bloklash</div></div><button class="tg on" id="t-yt"></button></div>
+  <div class="tr"><div class="tinfo"><div class="tn">Reklama Bloklash</div><div class="td">Sahifadagi reklamalarni olib tashlash</div></div><button class="tg on" id="t-ab"></button></div>
+
+  <div class="slb">🖥️ Oyna</div>
+  <div class="tr"><div class="tinfo"><div class="tn">Yangi Oyna</div><div class="td">+ tugmasi bilan yangi brauzer oynasi</div></div><button class="tg on" id="t-tab"></button></div>
+
+  <div class="slb">🧩 Extensions</div>
+  <div class="tr" style="flex-direction:column;gap:8px">
+    <div style="display:flex;gap:8px">
+      <input class="fi" id="ext-name" placeholder="Extension name (optional)" />
+      <input class="fi" id="ext-url" placeholder="https://example.com/extension.js" />
+      <button class="bp" id="btn-install-ext">➕ Install</button>
+    </div>
+    <div id="extensions-list" style="width:100%"></div>
+  </div>
+
+  <button class="bp" id="save-s">💾 Saqlash</button>
+</div></div>
+
+<!-- ── PROFILE ── -->
+<div class="ov" id="ov-p"><div class="md">
+  <div class="mhd"><div class="mtt">👤 Profil</div><button class="mcl" id="cls-p">✕</button></div>
+  <div id="pv-out">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:42px;margin-bottom:8px">👤</div>
+      <div style="font-size:13px;color:#6B7A99">Hisobingizga kiring</div>
+    </div>
+    <button class="gb" id="btn-gg"><span style="font-size:16px">🇬</span> Google orqali kirish</button>
+    <div class="dvd">yoki email bilan</div>
+    <label class="flab">Email</label><input class="fi" id="l-em" type="email" placeholder="email@example.com"/>
+    <label class="flab">Parol</label><input class="fi" id="l-pw" type="password" placeholder="••••••••"/>
+    <button class="bp" id="btn-li">Kirish</button>
+    <button class="bs" id="btn-to-su">Yangi hisob yaratish →</button>
+  </div>
+  <div id="pv-su" style="display:none">
+    <label class="flab">Ism</label><input class="fi" id="su-nm" placeholder="Ismingiz"/>
+    <label class="flab">Email</label><input class="fi" id="su-em" type="email"/>
+    <label class="flab">Parol</label><input class="fi" id="su-pw" type="password" placeholder="Kamida 6 belgi"/>
+    <button class="bp" id="btn-su">Ro'yxatdan o'tish</button>
+    <button class="bs" id="btn-to-li">← Orqaga</button>
+  </div>
+  <div id="pv-in" style="display:none">
+    <div class="pav" id="pav">?</div>
+    <div class="pnm" id="pnm">-</div>
+    <div class="pem" id="pem">-</div>
+    <div style="display:flex;gap:9px;margin-bottom:14px">
+      <div style="flex:1;background:#1A2235;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#FF4757" id="p-bl">0</div>
+        <div style="font-size:9px;color:#6B7A99">Blok sahifa</div>
+      </div>
+      <div style="flex:1;background:#1A2235;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#FF6B35" id="p-bi">0</div>
+        <div style="font-size:9px;color:#6B7A99">Blok rasm</div>
+      </div>
+      <div style="flex:1;background:#1A2235;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#3B82F6" id="p-tot">0</div>
+        <div style="font-size:9px;color:#6B7A99">Jami</div>
+      </div>
+    </div>
+    <button class="bs" id="btn-so">🚪 Chiqish</button>
+  </div>
+</div></div>
+
+<!-- ── LINKS EDIT ── -->
+<div class="ov" id="ov-l"><div class="md">
+  <div class="mhd"><div class="mtt">✏️ Tezkor havolalar</div><button class="mcl" id="cls-l">✕</button></div>
+  <div id="ll"></div>
+  <div class="slb">➕ Yangi havola qo'shish</div>
+  <label class="flab">Nom</label><input class="fi" id="nl-n" placeholder="YouTube"/>
+  <label class="flab">URL</label><input class="fi" id="nl-u" placeholder="https://youtube.com"/>
+  <label class="flab">Emoji</label><input class="fi" id="nl-e" placeholder="📺" maxlength="4"/>
+  <button class="bp" id="btn-al">➕ Qo'shish</button>
+</div></div>
+
+<!-- ── FEEDBACK MODAL ── -->
+<div class="ov" id="ov-fb"><div class="md" style="width:500px">
+  <div class="mhd"><div class="mtt">💬 Feedback yuborish</div><button class="mcl" id="cls-fb">✕</button></div>
+  
+  <div class="info-box">🎯 Sizning fikringiz bizga juda muhim! Rasmlar va izohlar bilan yuborishingiz mumkin.</div>
+
+  <label class="flab">📸 Rasm yuklash (ixtiyoriy)</label>
+  <div style="position:relative;margin-bottom:14px">
+    <input type="file" id="fb-img" accept="image/*" style="display:none"/>
+    <button class="bs" id="btn-upload-img" style="width:100%;background:rgba(0,229,160,.1);border:2px dashed rgba(0,229,160,.3)">📤 Rasm tanlash</button>
+    <div id="img-preview" style="margin-top:10px;display:none;border-radius:10px;overflow:hidden;max-height:150px">
+      <img id="preview-img" style="width:100%;height:auto;border-radius:10px" />
+    </div>
+  </div>
+
+  <label class="flab">💭 Izoh / Fikr</label>
+  <textarea id="fb-text" class="fi" placeholder="Sizning fikringizni shu yerga yozing..." style="min-height:80px;resize:vertical"></textarea>
+
+  <label class="flab">📧 Email (ixtiyoriy)</label>
+  <input type="email" id="fb-email" class="fi" placeholder="email@example.com"/>
+
+  <button class="bp" id="btn-send-fb" style="width:100%">✅ Yuborish</button>
+</div></div>
+
+<script>
+// ── STATE ──
+const DEF_LINKS = [
+  {n:'YouTube',     u:'https://youtube.com',         e:'📺'},
+  {n:'Wikipedia',   u:'https://wikipedia.org',        e:'📖'},
+  {n:'Khan Academy',u:'https://khanacademy.org',      e:'📚'},
+  {n:'GitHub',      u:'https://github.com',           e:'💻'},
+  {n:'Tarjimon',    u:'https://translate.google.com', e:'🌐'},
+  {n:'Gmail',       u:'https://mail.google.com',      e:'📧'},
+];
+let links    = JSON.parse(localStorage.getItem('sn_l') || 'null') || DEF_LINKS;
+let cfg      = JSON.parse(localStorage.getItem('sn_c') || '{}');
+let user     = JSON.parse(localStorage.getItem('sn_u') || 'null');
+let accounts = JSON.parse(localStorage.getItem('sn_a') || '{}');
+if (!cfg.eng) cfg.eng = 'ddg';
+['ai','img','yt','ab','tab'].forEach(k => { if (cfg[k] === undefined) cfg[k] = true; });
+
+const ENGS = { ddg:'https://duckduckgo.com/?q=', google:'https://www.google.com/search?q=' };
+
+// window.safenet preload.js orqali keladi — tayyor bo'lishini kut
+function sn() { return window.safenet; }
+
+function nav(u) {
+  if (sn()) { sn().navigate(u); }
+  else { setTimeout(() => nav(u), 100); }
+}
+
+// ── SEARCH ──
+function doSearch() {
+  const v = document.getElementById('si').value.trim();
+  if (!v) return;
+  let url = v;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (url.includes('.') && !url.includes(' ')) url = 'https://' + url;
+    else url = ENGS[cfg.eng||'ddg'] + encodeURIComponent(v);
+  }
+  nav(url);
+}
+document.getElementById('si').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+document.getElementById('sg').addEventListener('click', doSearch);
+document.getElementById('btn-nt').addEventListener('click', () => sn()?.newTab(''));
+
+// ── STATS ──
+function initStats() {
+  if (!sn()?.onStats) { setTimeout(initStats, 200); return; }
+  sn().onStats(s => {
+    document.getElementById('v-bl').textContent  = s.block    || 0;
+    document.getElementById('v-bi').textContent  = s.blockImg || 0;
+    document.getElementById('v-tot').textContent = s.total    || 0;
+    const pb = document.getElementById('p-bl'), pi2 = document.getElementById('p-bi'), pt = document.getElementById('p-tot');
+    if (pb) pb.textContent = s.block    || 0;
+    if (pi2) pi2.textContent = s.blockImg || 0;
+    if (pt) pt.textContent = s.total    || 0;
+  });
+}
+
+// ── QUICK LINKS ──
+function renderQL() {
+  const g = document.getElementById('qg'); g.innerHTML = '';
+  links.forEach(l => {
+    const b = document.createElement('button');
+    b.className = 'qb';
+    b.innerHTML = '<span>' + l.e + '</span>' + l.n;
+    b.addEventListener('click', () => nav(l.u));
+    g.appendChild(b);
+  });
+  const a = document.createElement('button');
+  a.className = 'qadd'; a.textContent = "+ Qo'shish";
+  a.addEventListener('click', () => openOv('ov-l'));
+  g.appendChild(a);
+}
+
+// ── SETTINGS TOGGLES ──
+function initToggles() {
+  document.getElementById('t-ddg').className = 'tg' + (cfg.eng === 'ddg' ? ' on' : '');
+  document.getElementById('t-gg').className  = 'tg' + (cfg.eng === 'google' ? ' on' : '');
+  ['ai','img','yt','ab','tab'].forEach(k => {
+    document.getElementById('t-'+k).className = 'tg' + (cfg[k] ? ' on' : '');
+  });
+}
+document.getElementById('t-ddg').addEventListener('click', () => { cfg.eng='ddg'; initToggles(); });
+document.getElementById('t-gg').addEventListener('click',  () => { cfg.eng='google'; initToggles(); });
+['ai','img','yt','ab','tab'].forEach(k => {
+  document.getElementById('t-'+k).addEventListener('click', () => {
+    cfg[k] = !cfg[k];
+    document.getElementById('t-'+k).className = 'tg' + (cfg[k] ? ' on' : '');
+  });
+});
+
+// Settings modal ochilganda togglelarni yangilash
+document.getElementById('btn-settings')?.addEventListener('click', () => { initToggles(); openOv('ov-s'); });
+// Header dagi sozlamalar tugmasi
+document.querySelector('[onclick*="ov-s"]')?.removeAttribute('onclick');
+document.querySelector('.tbtn:nth-child(2)')?.addEventListener('click', () => { initToggles(); openOv('ov-s'); });
+
+document.getElementById('save-s').addEventListener('click', () => {
+  localStorage.setItem('sn_c', JSON.stringify(cfg));
+  // safenet tayyor bo'lsa yuborish
+  if (sn()?.saveSettings) sn().saveSettings(cfg);
+  closeOv('ov-s'); toast('✅ Sozlamalar saqlandi!');
+});
+
+// ── PROFILE ──
+function renderProfile() {
+  const out = document.getElementById('pv-out');
+  const inp = document.getElementById('pv-in');
+  const su  = document.getElementById('pv-su');
+  if (user) {
+    out.style.display='none'; su.style.display='none'; inp.style.display='block';
+    const ini = (user.n||'?').charAt(0).toUpperCase();
+    document.getElementById('pav').textContent = ini;
+    document.getElementById('pnm').textContent = user.n || '';
+    document.getElementById('pem').textContent = user.e || '';
+    document.getElementById('av').textContent  = ini;
+  } else {
+    out.style.display='block'; inp.style.display='none'; su.style.display='none';
+    document.getElementById('av').textContent = '?';
+  }
+}
+document.getElementById('btn-gg').addEventListener('click', () => {
+  user = { n: 'Google Foydalanuvchi', e: 'user@gmail.com', p: 'google' };
+  localStorage.setItem('sn_u', JSON.stringify(user));
+  renderProfile(); toast('✅ Google orqali kirildi!');
+});
+document.getElementById('btn-li').addEventListener('click', () => {
+  const e = document.getElementById('l-em').value.trim();
+  const p = document.getElementById('l-pw').value;
+  if (!e || !p) { toast('❌ Email va parol kiriting!'); return; }
+  if (accounts[e] && accounts[e].pw === p) {
+    user = { n: accounts[e].nm, e, p: 'email' };
+    localStorage.setItem('sn_u', JSON.stringify(user));
+    renderProfile(); toast('✅ Xush kelibsiz, ' + user.n + '!');
+  } else toast('❌ Email yoki parol xato!');
+});
+document.getElementById('btn-to-su').addEventListener('click', () => {
+  document.getElementById('pv-out').style.display = 'none';
+  document.getElementById('pv-su').style.display  = 'block';
+});
+document.getElementById('btn-to-li').addEventListener('click', () => {
+  document.getElementById('pv-out').style.display = 'block';
+  document.getElementById('pv-su').style.display  = 'none';
+});
+document.getElementById('btn-su').addEventListener('click', () => {
+  const nm = document.getElementById('su-nm').value.trim();
+  const e  = document.getElementById('su-em').value.trim();
+  const p  = document.getElementById('su-pw').value;
+  if (!nm||!e||!p) { toast('❌ Barcha maydonlarni to'ldiring!'); return; }
+  if (p.length < 6) { toast('❌ Parol kamida 6 belgi!'); return; }
+  if (accounts[e]) { toast('❌ Bu email allaqachon bor!'); return; }
+  accounts[e] = { nm, pw: p };
+  localStorage.setItem('sn_a', JSON.stringify(accounts));
+  user = { n: nm, e, p: 'email' };
+  localStorage.setItem('sn_u', JSON.stringify(user));
+  renderProfile(); toast('✅ Hisob yaratildi, xush kelibsiz!');
+});
+document.getElementById('btn-so').addEventListener('click', () => {
+  user = null; localStorage.removeItem('sn_u');
+  renderProfile(); closeOv('ov-p'); toast('👋 Chiqildi');
+});
+
+// ── LINKS EDIT ──
+function renderLL() {
+  const c = document.getElementById('ll'); c.innerHTML = '';
+  links.forEach((l, i) => {
+    const d = document.createElement('div'); d.className = 'li';
+    d.innerHTML = '<span class="lie">' + l.e + '</span><div class="lin"><div class="linn">' + l.n + '</div><div class="linu">' + l.u + '</div></div>';
+    const btn = document.createElement('button'); btn.className = 'ldl'; btn.textContent = '✕';
+    btn.addEventListener('click', () => delLink(i));
+    d.appendChild(btn); c.appendChild(d);
+  });
+}
+document.getElementById('btn-ql').addEventListener('click', () => { renderLL(); openOv('ov-l'); });
+document.getElementById('btn-al').addEventListener('click', () => {
+  const nm = document.getElementById('nl-n').value.trim();
+  const url = document.getElementById('nl-u').value.trim();
+  const em  = document.getElementById('nl-e').value.trim() || '🔗';
+  if (!nm || !url) { toast('❌ Nom va URL kiriting!'); return; }
+  links.push({ n: nm, u: url.startsWith('http') ? url : 'https://' + url, e: em });
+  localStorage.setItem('sn_l', JSON.stringify(links));
+  document.getElementById('nl-n').value = '';
+  document.getElementById('nl-u').value = '';
+  document.getElementById('nl-e').value = '';
+  renderQL(); renderLL(); toast('✅ Qo'shildi!');
+});
+function delLink(i) {
+  links.splice(i, 1);
+  localStorage.setItem('sn_l', JSON.stringify(links));
+  renderQL(); renderLL();
+}
+
+// ── EXTENSIONS UI ──
+async function loadExtensionsUI() {
+  try {
+    const list = (window.safenet_extensions && window.safenet_extensions.list) ? await window.safenet_extensions.list() : [];
+    renderExtensions(list || []);
+  } catch (e) { console.warn('loadExtensionsUI', e); }
+}
+
+function renderExtensions(list) {
+  const out = document.getElementById('extensions-list'); if (!out) return; out.innerHTML = '';
+  if (!list || !list.length) { out.innerHTML = '<div class="li">No extensions installed</div>'; return; }
+  list.forEach(ext => {
+    const d = document.createElement('div'); d.className = 'li';
+    d.innerHTML = '<div style="flex:1"><div class="linn">' + (ext.name||ext.id) + '</div><div class="linu">' + (ext.url||'') + '</div></div>';
+    const btnToggle = document.createElement('button'); btnToggle.className = 'bs'; btnToggle.style.marginRight='8px'; btnToggle.textContent = ext.enabled ? 'Disable' : 'Enable';
+    btnToggle.onclick = async () => {
+      await window.safenet_extensions.toggle(ext.id, !ext.enabled);
+    };
+    const btnDel = document.createElement('button'); btnDel.className = 'ldl'; btnDel.textContent = '✕';
+    btnDel.onclick = async () => { await window.safenet_extensions.uninstall(ext.id); };
+    d.appendChild(btnToggle); d.appendChild(btnDel); out.appendChild(d);
+  });
+}
+
+document.getElementById('btn-install-ext')?.addEventListener('click', async () => {
+  const url = document.getElementById('ext-url').value.trim();
+  const name = document.getElementById('ext-name').value.trim();
+  if (!url) { toast('❌ Extension URL kiriting'); return; }
+  try {
+    const res = await window.safenet_extensions.install({ url, name });
+    if (res && res.ok) {
+      document.getElementById('ext-url').value = ''; document.getElementById('ext-name').value = '';
+      toast('✅ Extension installed');
+      loadExtensionsUI();
+    } else {
+      toast('❌ ' + (res && res.error) || 'Install failed');
+    }
+  } catch (e) { toast('❌ ' + String(e.message)); }
+});
+
+if (window.safenet_extensions && window.safenet_extensions.onChanged) {
+  window.safenet_extensions.onChanged(list => { loadExtensionsUI(); });
+}
+// initial load
+setTimeout(loadExtensionsUI, 600);
+
+// ── MODALS ──
+function openOv(id)  { document.getElementById(id).classList.add('open'); }
+function closeOv(id) { document.getElementById(id).classList.remove('open'); }
+document.getElementById('cls-s').addEventListener('click', () => closeOv('ov-s'));
+document.getElementById('cls-p').addEventListener('click', () => closeOv('ov-p'));
+document.getElementById('cls-l').addEventListener('click', () => closeOv('ov-l'));
+document.getElementById('cls-fb').addEventListener('click', () => closeOv('ov-fb'));
+['ov-s','ov-p','ov-l','ov-fb'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) closeOv(id); });
+});
+
+// ── FEEDBACK ──
+let feedbackImageData = null;
+document.getElementById('btn-feedback').addEventListener('click', () => {
+  feedbackImageData = null;
+  document.getElementById('fb-img').value = '';
+  document.getElementById('fb-text').value = '';
+  document.getElementById('fb-email').value = '';
+  document.getElementById('img-preview').style.display = 'none';
+  openOv('ov-fb');
+});
+
+document.getElementById('btn-upload-img').addEventListener('click', () => {
+  document.getElementById('fb-img').click();
+});
+
+document.getElementById('fb-img').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  // Rasm o'lchamini tekshir (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    toast('❌ Rasm juda katta (max 5MB)');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    feedbackImageData = event.target.result;
+    document.getElementById('preview-img').src = feedbackImageData;
+    document.getElementById('img-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('btn-send-fb').addEventListener('click', async () => {
+  const text = document.getElementById('fb-text').value.trim();
+  const email = document.getElementById('fb-email').value.trim();
+  
+  if (!text) {
+    toast('❌ Iltimos, izoh yozing!');
+    return;
+  }
+  
+  const btn = document.getElementById('btn-send-fb');
+  btn.disabled = true;
+  btn.textContent = '⏳ Yuborilmoqda...';
+  
+  try {
+    // Backend ga yuborish
+    const response = await fetch('http://localhost:13337/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        email: email || 'anonymous@safenet.local',
+        image: feedbackImageData || null,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      })
+    });
+    
+    if (response.ok) {
+      toast('✅ Feedback muvaffaqiyatli yuborildi! Rahmat! 🙏');
+      closeOv('ov-fb');
+    } else {
+      const error = await response.text();
+      throw new Error(error || 'Server error');
+    }
+  } catch (err) {
+    console.error('Feedback error:', err);
+    toast('❌ Xatolik: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Yuborish';
+  }
+});
+
+// Header tugmalarini to'g'ri bog'lash (onclick atributlari o'rniga)
+document.querySelectorAll('.tbtn').forEach(btn => {
+  if (btn.textContent.includes('Sozlamalar')) {
+    btn.onclick = () => { initToggles(); openOv('ov-s'); };
+  }
+});
+document.getElementById('av').onclick = () => openOv('ov-p');
+
+// ── TOAST ──
+function toast(msg) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1A2235;border:1px solid #1E2D45;color:#E8F0FE;padding:10px 18px;border-radius:11px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none';
+  el.textContent = msg; document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── INIT ──
+renderQL();
+renderProfile();
+initToggles();
+initStats();
+</script>
+
+<!-- Onboarding System -->
+<script src="./onboarding/profile-service.js"></script>
+<script src="./onboarding/onboarding-orchestrator.js"></script>
+
+</body></html>

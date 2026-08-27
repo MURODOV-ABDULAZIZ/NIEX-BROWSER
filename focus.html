@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIEX Focus</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   NIEX FOCUS — bag'ishlangan mahsulot sahifasi.
+   Dizayn tili safenethome.html bilan bir xil (#00E5A0 accent, aurora fon).
+   Bitta authoritative holat: backend focusManager (window.safenet_focus).
+   ═══════════════════════════════════════════════════════════════ */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #0A0E1A;
+  --panel: rgba(15, 23, 42, 0.72);
+  --panel-2: rgba(255,255,255,0.04);
+  --text: #E8F0FE;
+  --muted: #8ea3c4;
+  --border: rgba(255,255,255,0.09);
+  --accent: #00E5A0;
+  --accent-2: #00C885;
+  --accent-soft: rgba(0,229,160,0.14);
+  --danger: #FF6B7A;
+  --warn: #FFB86B;
+  --radius: 16px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #F4F7FB; --panel: rgba(255,255,255,0.82); --panel-2: rgba(15,23,42,0.03);
+    --text: #1F2937; --muted: #52606D; --border: rgba(15,23,42,0.10);
+    --accent: #0F9F79; --accent-2: #0C8A68; --accent-soft: rgba(15,159,121,0.12);
+  }
+}
+html, body { height: 100%; }
+body {
+  background:
+    radial-gradient(circle at 20% 8%, rgba(0,229,160,0.12), transparent 22%),
+    radial-gradient(circle at 88% 16%, rgba(59,130,246,0.12), transparent 26%),
+    linear-gradient(180deg, var(--bg) 0%, #08101C 100%);
+  color: var(--text);
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+@media (prefers-color-scheme: light) {
+  body { background: linear-gradient(180deg, #F4F7FB 0%, #E7EEF8 100%); }
+}
+body::after {
+  content:''; position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 40% at 15% 20%, rgba(0,229,160,0.16), transparent 60%),
+    radial-gradient(ellipse 50% 45% at 88% 82%, rgba(6,182,212,0.14), transparent 60%);
+  filter: blur(70px);
+  animation: drift 24s ease-in-out infinite alternate;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-3%,4%,0)} }
+
+.wrap { position: relative; z-index: 1; width: min(760px, 100%); margin: 0 auto; padding: 30px 22px 60px; }
+
+/* Header */
+.top { display:flex; align-items:center; gap:12px; margin-bottom: 22px; }
+.brand { display:flex; align-items:center; gap:11px; }
+.brand .mark {
+  width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
+  background: linear-gradient(135deg, var(--accent), #06B6D4); color:#04120c;
+  font-weight:900; font-size:19px; box-shadow: 0 8px 24px rgba(0,229,160,.28);
+}
+.brand .t1 { font-weight:800; font-size:17px; letter-spacing:.5px; }
+.brand .t2 { font-size:11px; color: var(--muted); letter-spacing:2px; text-transform:uppercase; }
+.top .spacer { flex:1; }
+.ghost-btn {
+  background: var(--panel-2); border:1px solid var(--border); color: var(--text);
+  border-radius:10px; padding:9px 13px; font-size:12.5px; font-weight:700; cursor:pointer;
+  font-family:inherit; transition:.15s; display:inline-flex; align-items:center; gap:6px;
+}
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.card {
+  background: var(--panel); border:1px solid var(--border); border-radius: var(--radius);
+  padding: 22px; backdrop-filter: blur(14px); box-shadow: 0 12px 40px rgba(0,0,0,.22);
+}
+.card + .card { margin-top: 18px; }
+.card-title { font-size:15px; font-weight:800; margin-bottom:4px; }
+.card-sub { font-size:12.5px; color: var(--muted); line-height:1.55; margin-bottom:16px; }
+
+/* Explain strip */
+.explain { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:14px; }
+.explain .e { background: var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:12px; }
+.explain .e .ei { font-size:16px; margin-bottom:6px; }
+.explain .e .eh { font-size:12px; font-weight:700; margin-bottom:3px; }
+.explain .e .ed { font-size:11px; color: var(--muted); line-height:1.45; }
+@media (max-width: 620px){ .explain{ grid-template-columns:1fr; } }
+
+/* Form */
+.field { margin-bottom: 15px; }
+.label { display:block; font-size:12.5px; font-weight:700; margin-bottom:7px; }
+.label .opt { color: var(--muted); font-weight:500; font-size:11px; }
+.input, .textarea {
+  width:100%; background: var(--panel-2); border:1px solid var(--border); border-radius:11px;
+  color: var(--text); padding:12px 13px; font-size:13.5px; font-family:inherit; transition:.15s; outline:none;
+}
+.textarea { resize:vertical; min-height:60px; line-height:1.5; }
+.input:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--bg); }
+.input::placeholder, .textarea::placeholder { color: var(--muted); opacity:.75; }
+
+/* Duration chips */
+.chips { display:flex; flex-wrap:wrap; gap:9px; }
+.chip {
+  background: var(--panel-2); border:1px solid var(--border); color: var(--text);
+  border-radius:10px; padding:10px 15px; font-size:13px; font-weight:700; cursor:pointer; transition:.15s; font-family:inherit;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.sel { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.chip-custom { display:flex; align-items:center; gap:6px; }
+.chip-custom input { width:64px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:8px; font-family:inherit; font-size:13px; outline:none; }
+.chip-custom input:focus { border-color: var(--accent); }
+
+/* Subtasks */
+.sub-add { display:flex; gap:8px; margin-bottom:10px; }
+.sub-add .input { flex:1; }
+.sub-list { display:flex; flex-direction:column; gap:8px; }
+.sub-row { display:flex; align-items:center; gap:10px; background: var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.sub-row .chk {
+  width:20px; height:20px; border-radius:6px; border:2px solid var(--muted); flex-shrink:0; cursor:pointer;
+  display:grid; place-items:center; transition:.15s; background:transparent;
+}
+.sub-row .chk.on { background: var(--accent); border-color: var(--accent); color:#04120c; font-weight:900; }
+.sub-row .st-title { flex:1; font-size:13px; }
+.sub-row .st-title.done { text-decoration: line-through; color: var(--muted); }
+.sub-row .x { color: var(--muted); cursor:pointer; font-size:15px; padding:2px 6px; border-radius:6px; }
+.sub-row .x:hover { color: var(--danger); background: rgba(255,107,122,.1); }
+
+/* Buttons */
+.btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:#04120c;
+  border:none; border-radius:12px; padding:14px 18px; font-size:14px; font-weight:800; cursor:pointer;
+  font-family:inherit; transition:.15s; width:100%; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn[disabled] { opacity:.5; cursor:not-allowed; transform:none; filter:none; }
+.btn.secondary { background: var(--panel-2); color: var(--text); border:1px solid var(--border); }
+.btn.secondary:hover { border-color: var(--accent); color: var(--accent); filter:none; }
+.btn.danger { background: rgba(255,107,122,.14); color: var(--danger); border:1px solid rgba(255,107,122,.3); }
+.btn.danger:hover { background: rgba(255,107,122,.22); filter:none; }
+.btn-row { display:flex; gap:10px; margin-top:6px; }
+.btn-row .btn { width:auto; flex:1; }
+.err { color: var(--danger); font-size:12.5px; margin-top:10px; min-height:16px; }
+
+/* Summary */
+.summary-row { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+.summary-row:last-child { border-bottom:none; }
+.summary-row .sk { width:110px; flex-shrink:0; font-size:11px; text-transform:uppercase; letter-spacing:1px; color: var(--muted); padding-top:2px; }
+.summary-row .sv { flex:1; font-size:14px; font-weight:600; line-height:1.5; }
+
+/* Active screen */
+.active-wrap { text-align:center; padding: 8px 0 4px; }
+.focus-on { font-size:11px; letter-spacing:3px; text-transform:uppercase; color: var(--accent); font-weight:700; }
+.active-goal { font-size:24px; font-weight:800; margin:10px 0 4px; line-height:1.25; }
+.active-task { font-size:14.5px; color: var(--muted); margin-bottom:20px; }
+.ring-wrap { position:relative; width:220px; height:220px; margin: 4px auto 8px; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-bg { fill:none; stroke: var(--border); stroke-width:10; }
+.ring-fg { fill:none; stroke: url(#grad); stroke-width:10; stroke-linecap:round; transition: stroke-dashoffset .9s linear; }
+.ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ring-time { font-size:42px; font-weight:800; font-variant-numeric: tabular-nums; letter-spacing:1px; }
+.ring-label { font-size:11.5px; color: var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:2px; }
+.paused-badge { display:inline-block; margin-top:10px; background: rgba(255,184,107,.15); color: var(--warn); border:1px solid rgba(255,184,107,.3); border-radius:20px; padding:5px 14px; font-size:12px; font-weight:700; }
+.browse-note { margin-top:18px; font-size:12.5px; color: var(--muted); background: var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; line-height:1.5; }
+.browse-note b { color: var(--accent); }
+
+/* History */
+.hist-item { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--border); }
+.hist-item:last-child { border-bottom:none; }
+.hist-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.hist-main { flex:1; min-width:0; }
+.hist-goal { font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hist-meta { font-size:11.5px; color: var(--muted); margin-top:2px; }
+.hist-min { font-size:13px; font-weight:800; color: var(--accent); flex-shrink:0; }
+.empty { text-align:center; color: var(--muted); font-size:13px; padding: 26px 0; }
+
+/* Stat strip */
+.stat-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+.stat { background: var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; }
+.stat .sv { font-size:22px; font-weight:800; }
+.stat .sl { font-size:11px; color: var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:1px; }
+.stat .sv.accent { color: var(--accent); }
+
+/* Rating */
+.rate-row { display:flex; gap:10px; }
+.rate {
+  flex:1; background: var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:14px 8px;
+  text-align:center; cursor:pointer; transition:.15s; font-family:inherit;
+}
+.rate:hover { border-color: var(--accent); }
+.rate.sel { background: var(--accent-soft); border-color: var(--accent); }
+.rate .ri { font-size:22px; }
+.rate .rl { font-size:12px; font-weight:700; margin-top:5px; color: var(--text); }
+.pill-row { display:flex; flex-wrap:wrap; gap:8px; }
+.pill { background: var(--panel-2); border:1px solid var(--border); border-radius:20px; padding:8px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:.15s; }
+.pill:hover { border-color: var(--accent); }
+.pill.sel { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+/* Strong Focus (PART 5) */
+.sf-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.sf-title{ font-size:13.5px; font-weight:700; }
+.sf-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.4; }
+.toggle{ width:46px; height:27px; border-radius:20px; background:var(--panel-2); border:1px solid var(--border); position:relative; cursor:pointer; flex-shrink:0; transition:.18s; }
+.toggle::after{ content:''; position:absolute; top:2px; left:2px; width:21px; height:21px; border-radius:50%; background:var(--muted); transition:.18s; }
+.toggle.on{ background:var(--accent-soft); border-color:var(--accent); }
+.toggle.on::after{ left:21px; background:var(--accent); }
+#sf-config{ margin-top:14px; }
+.sf-cats{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.sf-chip{ background:var(--panel-2); border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:8px 13px; font-size:12.5px; font-weight:600; cursor:pointer; transition:.14s; font-family:inherit; }
+.sf-chip.on{ background:rgba(255,107,122,.12); border-color:var(--danger); color:var(--danger); }
+.sf-add{ display:flex; gap:8px; margin-bottom:10px; }
+.sf-add .input{ flex:1; }
+.sf-domains{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.sf-domain{ display:inline-flex; align-items:center; gap:7px; background:rgba(255,107,122,.1); border:1px solid rgba(255,107,122,.25); color:var(--danger); border-radius:16px; padding:5px 10px; font-size:12px; }
+.sf-domain i{ cursor:pointer; font-style:normal; opacity:.75; }
+.sf-domain i:hover{ opacity:1; }
+.sf-note{ font-size:11px; color:var(--muted); line-height:1.5; }
+.sf-hint{ font-size:12px; color:var(--muted); margin-bottom:10px; }
+.sf-loading{ color:var(--muted); font-size:12px; padding:8px 0; }
+.adv-sep{ height:1px; background:var(--border); margin:4px 0 16px; }
+
+/* Statistika (PART 4) */
+.trend{ font-size:13px; font-weight:700; padding:4px 10px; border-radius:9px; white-space:nowrap; }
+.trend.up{ color:var(--accent); background:var(--accent-soft); }
+.trend.down{ color:var(--warn); background:rgba(255,184,107,.14); }
+.trend.flat{ color:var(--muted); background:var(--panel-2); }
+.bars{ display:flex; align-items:flex-end; justify-content:space-between; gap:7px; height:126px; padding-top:16px; }
+.bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; }
+.bar-val{ font-size:10px; color:var(--muted); height:12px; }
+.bar{ width:100%; max-width:32px; border-radius:6px 6px 3px 3px; background:linear-gradient(180deg,var(--accent),#06B6D4); min-height:3px; transition:height .5s ease; }
+.bar.today{ outline:2px solid var(--accent-soft); outline-offset:2px; }
+.bar.empty{ background:var(--panel-2); }
+.bar-lbl{ font-size:11px; color:var(--muted); }
+.bar-lbl.today{ color:var(--accent); font-weight:700; }
+.dots{ display:flex; gap:8px; justify-content:space-between; }
+.dot-day{ flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; }
+.dot{ width:16px; height:16px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border); }
+.dot.on{ background:var(--accent); border-color:var(--accent); }
+.dot-l{ font-size:10.5px; color:var(--muted); }
+.metric-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.metric{ background:var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:12px 8px; text-align:center; }
+.metric .mv{ font-size:19px; font-weight:800; }
+.metric .ml{ font-size:10px; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.4px; }
+.goal-row{ margin-bottom:15px; }
+.goal-row:last-child{ margin-bottom:0; }
+.goal-info{ display:flex; justify-content:space-between; align-items:baseline; font-size:13px; margin-bottom:6px; gap:10px; }
+.goal-name{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.goal-min{ color:var(--accent); font-weight:700; flex-shrink:0; }
+.goal-track{ height:8px; background:var(--panel-2); border-radius:6px; overflow:hidden; }
+.goal-fill{ height:100%; background:linear-gradient(90deg,var(--accent),#06B6D4); border-radius:6px; transition:width .5s ease; }
+.goal-sub{ font-size:11px; color:var(--muted); margin-top:4px; }
+.cat-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.cat-chip{ background:var(--panel-2); border:1px solid var(--border); border-radius:20px; padding:6px 12px; font-size:11.5px; color:var(--muted); }
+.cat-chip b{ color:var(--text); }
+.loading { text-align:center; padding:80px 0; color: var(--muted); font-size:13px; letter-spacing:2px; }
+.fade { animation: fade .25s ease; }
+@keyframes fade { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+
+/* Activity Intelligence (Parental Control PART 1-4) */
+:root{ --danger:#FF5C6C; --warn:#FFB020; --neutral:#7C8AA5; }
+.act-hero{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.donut{ position:relative; width:132px; height:132px; flex-shrink:0; }
+.donut svg{ transform:rotate(-90deg); }
+.donut .dc{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.donut .dc .dv{ font-size:24px; font-weight:800; color:var(--accent); line-height:1; }
+.donut .dc .dl{ font-size:10px; color:var(--muted); margin-top:3px; letter-spacing:1px; }
+.act-legend{ flex:1; min-width:180px; display:flex; flex-direction:column; gap:9px; }
+.leg{ display:flex; align-items:center; gap:9px; font-size:12.5px; }
+.leg .sw{ width:11px; height:11px; border-radius:3px; flex-shrink:0; }
+.leg .ln{ color:var(--text); flex:1; }
+.leg .lv{ color:var(--muted); font-weight:700; }
+.brk-row{ display:flex; align-items:center; gap:10px; margin:9px 0; }
+.brk-ic{ width:30px; height:30px; border-radius:8px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.brk-main{ flex:1; min-width:0; }
+.brk-top{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; }
+.brk-name{ color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.brk-val{ color:var(--muted); font-weight:700; flex-shrink:0; margin-left:8px; }
+.brk-track{ height:6px; background:var(--panel-2); border-radius:6px; overflow:hidden; }
+.brk-fill{ height:100%; border-radius:6px; transition:width .5s ease; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="mark">N</div>
+      <div>
+        <div class="t1">NIEX Focus</div>
+        <div class="t2">Intelligent Focus</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="ghost-btn" id="btn-home" title="Bosh sahifa">🏠 Bosh sahifa</button>
+  </div>
+  <div id="app"><div class="loading">Yuklanmoqda…</div></div>
+</div>
+
+<script>
+'use strict';
+/* ─────────────────────────────────────────────────────────────
+   NIEX Focus — mahsulot mantiqi (renderer tomoni).
+   Barcha holat backend'dan (window.safenet_focus). Bu yerda faqat UI.
+   ───────────────────────────────────────────────────────────── */
+const F = window.safenet_focus;
+const NAV = window.safenet;
+
+const app = document.getElementById('app');
+const RATINGS = { great: ['🤩','Zo\'r'], good: ['🙂','Yaxshi'], difficult: ['😓','Qiyin'] };
+const COMPLETION = { completed:'Bajarildi', partial:'Qisman', interrupted:'Uzildi', need_more_time:'Vaqt kerak' };
+const STATE_LABEL = { completed:['Bajarildi','#00E5A0'], interrupted:['Uzildi','#FFB86B'], cancelled:['Bekor qilindi','#8ea3c4'] };
+
+let S = {
+  data: null,
+  view: 'loading',        // loading | locked | setup | active | reflection | nofocus
+  reflect: null,          // refleksiya qilinayotgan sessiya (public shape)
+  draftSubtasks: [],      // setup formasi uchun
+  selDuration: 45,
+  strongFocus: false,     // Strong Focus (ixtiyoriy sayt-bloklash)
+  blockData: null,        // {categories, customDomains} — kerak bo'lganda yuklanadi
+  interventionEnabled: true,
+  rating: null,
+  completion: null,
+  wasActive: false,       // avvalgi holatda faol sessiya bormidi (auto-complete aniqlash uchun)
+};
+let ticker = null;
+
+// ── Yordamchilar ──────────────────────────────────────────────
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDur(min){ min = Math.round(Number(min)||0); if(min<60) return min+' daq'; const h=Math.floor(min/60), m=min%60; return m? `${h} soat ${m} daq` : `${h} soat`; }
+function fmtClock(ms){ const s=Math.max(0,Math.ceil(ms/1000)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; const mm=String(m).padStart(2,'0'), sss=String(ss).padStart(2,'0'); return h>0 ? `${h}:${mm}:${sss}` : `${mm}:${sss}`; }
+const UZ_MONTHS = ['yan','fev','mar','apr','may','iyn','iyl','avg','sen','okt','noy','dek'];
+function fmtDay(ts){ if(!ts) return ''; const d=new Date(ts), now=new Date(); const sameDay=(a,b)=>a.toDateString()===b.toDateString(); const y=new Date(now.getTime()-86400000); if(sameDay(d,now)) return 'Bugun'; if(sameDay(d,y)) return 'Kecha'; return d.getDate()+'-'+UZ_MONTHS[d.getMonth()]; }
+function stopTicker(){ if(ticker){ clearInterval(ticker); ticker=null; } }
+
+// ── Boshlash / marshrutlash ───────────────────────────────────
+async function refresh(){
+  try { S.data = await F.get(); }
+  catch(e){ S.data = null; }
+  route();
+}
+function route(){
+  const hasActive = !!(S.data && S.data.activeSession);
+  if(!S.data){ S.view='nofocus'; return render(); }
+  if(!S.data.canUseFocus){ S.view='locked'; return render(); }
+  if(hasActive){ S.wasActive = true; S.view='active'; return render(); }
+
+  // Faol sessiya yo'q:
+  if(S.view==='reflection' && S.reflect){ return render(); } // refleksiyada qolamiz
+  // Timer avtomatik yakunlangan bo'lsa — oxirgi sessiyaga refleksiya taklif qilamiz
+  const h = (S.data.history||[]);
+  if(S.wasActive && h[0] && !h[0].reflection && (h[0].state==='completed' || h[0].state==='interrupted')){
+    S.reflect = h[0]; S.rating=null; S.completion=null; S.wasActive=false; S.view='reflection'; return render();
+  }
+  S.wasActive = false; S.view='setup'; render();
+}
+
+function render(){
+  stopTicker();
+  if(S.view==='loading'){ app.innerHTML='<div class="loading">Yuklanmoqda…</div>'; return; }
+  if(S.view==='nofocus'){ app.innerHTML = viewNoFocus(); return; }
+  if(S.view==='locked'){ app.innerHTML = viewLocked(); bindLocked(); return; }
+  if(S.view==='active'){ app.innerHTML = viewActive(); bindActive(); startTicker(); return; }
+  if(S.view==='reflection'){ app.innerHTML = viewReflection(); bindReflection(); return; }
+  if(S.view==='stats'){ app.innerHTML = viewStats(); bindStats(); return; }
+  if(S.view==='activity'){ app.innerHTML = viewActivity(); bindActivity(); return; }
+  app.innerHTML = viewSetup(); bindSetup();
+}
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Focus mavjud emas (Electron tashqarisida)
+// ══════════════════════════════════════════════════════════════
+function viewNoFocus(){
+  return `<div class="card fade"><div class="card-title">Focus faqat NIEX brauzerida</div>
+  <div class="card-sub">Bu sahifa NIEX brauzeri ichida ishlaydi. Iltimos NIEX ichida oching.</div></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Pro kerak (upsell) — mavjud xatti-harakat saqlanadi
+// ══════════════════════════════════════════════════════════════
+function viewLocked(){
+  return `<div class="card fade">
+    <div class="card-title">🎯 NIEX Focus — Pro imkoniyati</div>
+    <div class="card-sub">Focus sessiyalari, maqsad va vazifa asosida chuqur ish, statistika va refleksiya — NIEX Pro tarkibida.</div>
+    <button class="btn" id="btn-upgrade">👑 Premium olish</button>
+  </div>`;
+}
+function bindLocked(){ document.getElementById('btn-upgrade').onclick = () => F.openPremium(); }
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Setup (yangi sessiya)
+// ══════════════════════════════════════════════════════════════
+function viewSetup(){
+  const st = (S.data && S.data.statistics) || {};
+  const streak = (st.streak && st.streak.current) || 0;
+  const today = (st.today && st.today.minutes) || 0;
+  const total = (st.totals && st.totals.minutes) || 0;
+  const presets = (S.data && S.data.durationPresets) || [25,45,60,90];
+
+  const statStrip = `<div class="stat-strip fade">
+    <div class="stat" id="s-streak"><div class="sv accent">${streak}</div><div class="sl">Kun seriya</div></div>
+    <div class="stat" id="s-today"><div class="sv">${fmtDur(today)}</div><div class="sl">Bugun</div></div>
+    <div class="stat" id="s-total"><div class="sv">${fmtDur(total)}</div><div class="sl">Jami focus</div></div>
+  </div>
+  <div class="fade" style="display:flex;gap:10px;margin-bottom:18px">
+    <button class="btn secondary" id="open-stats" style="flex:1;margin:0">📊 Focus statistikasi</button>
+    <button class="btn secondary" id="open-activity" style="flex:1;margin:0">🌐 Faoliyatim</button>
+  </div>`;
+
+  const chips = presets.map(p => `<button class="chip ${S.selDuration===p?'sel':''}" data-dur="${p}">${p} daq</button>`).join('');
+  const isCustom = !presets.includes(S.selDuration);
+
+  const subs = S.draftSubtasks.map((t,i) => `<div class="sub-row">
+      <div class="st-title">${esc(t)}</div>
+      <div class="x" data-del="${i}" title="O'chirish">✕</div>
+    </div>`).join('');
+
+  return statStrip + `<div class="card fade">
+    <div class="card-title">Nimaga e'tibor qaratamiz?</div>
+    <div class="card-sub">Maqsad va vazifangizni yozing — NIEX shu vaqtingizni himoya qilishga yordam beradi. Focus brauzingni <b>bloklamaydi</b>: siz erkin izlanishingiz mumkin.</div>
+
+    <div class="field">
+      <label class="label" for="f-goal">Maqsad</label>
+      <input class="input" id="f-goal" maxlength="200" placeholder="Masalan: Universitetga tayyorgarlik" autocomplete="off">
+    </div>
+    <div class="field">
+      <label class="label" for="f-task">Vazifa — nimani bajarmoqchisiz?</label>
+      <input class="input" id="f-task" maxlength="200" placeholder="Masalan: 30 ta algebra masalasini yechish" autocomplete="off">
+    </div>
+    <div class="field">
+      <label class="label" for="f-reason">Nega bu muhim? <span class="opt">— ixtiyoriy</span></label>
+      <textarea class="textarea" id="f-reason" maxlength="500" placeholder="Masalan: Ballimni oshirib, universitet imkoniyatlarimni kengaytirish uchun"></textarea>
+    </div>
+    <div class="field">
+      <label class="label" for="f-success">Muvaffaqiyat qanday ko'rinadi? <span class="opt">— ixtiyoriy</span></label>
+      <input class="input" id="f-success" maxlength="300" placeholder="Masalan: Barcha masalalar yechilib, xatolar tekshirilgan" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label class="label">Bosqichlar (subtasklar) <span class="opt">— ixtiyoriy</span></label>
+      <div class="sub-add">
+        <input class="input" id="f-subtask" maxlength="160" placeholder="Bosqich qo'shish…" autocomplete="off">
+        <button class="btn secondary" id="f-subtask-add" style="width:auto;padding:12px 16px">➕</button>
+      </div>
+      <div class="sub-list" id="f-sub-list">${subs}</div>
+    </div>
+
+    <div class="field">
+      <label class="label">Davomiylik</label>
+      <div class="chips">
+        ${chips}
+        <div class="chip-custom chip ${isCustom?'sel':''}" id="chip-custom">
+          <span>Boshqa:</span>
+          <input type="number" id="f-custom" min="5" max="240" value="${isCustom?S.selDuration:''}" placeholder="daq">
+        </div>
+      </div>
+    </div>
+
+    <div class="adv-sep"></div>
+    <div class="field">
+      <div class="sf-row">
+        <div><div class="sf-title">🛡️ Strong Focus</div><div class="sf-sub">Chalg'ituvchi saytlarni sessiya davomida NIEX ichida cheklaydi</div></div>
+        <button class="toggle ${S.strongFocus?'on':''}" id="sf-toggle" role="switch" aria-checked="${S.strongFocus}"></button>
+      </div>
+      <div id="sf-config" style="${S.strongFocus?'':'display:none'}"></div>
+    </div>
+    <div class="field">
+      <div class="sf-row">
+        <div><div class="sf-title">💬 Chiqishda eslatma</div><div class="sf-sub">NIEX'dan chiqsangiz sababini so'raydi (Focus Intelligence)</div></div>
+        <button class="toggle ${S.interventionEnabled?'on':''}" id="iv-toggle" role="switch" aria-checked="${S.interventionEnabled}"></button>
+      </div>
+    </div>
+
+    <div class="err" id="f-err"></div>
+    <button class="btn" id="f-start">🎯 Focusni boshlash — ${S.selDuration} daq</button>
+  </div>` + viewHistory();
+}
+
+function bindSetup(){
+  // Davomiylik chiplari
+  app.querySelectorAll('.chip[data-dur]').forEach(c => {
+    c.onclick = () => { S.selDuration = Number(c.dataset.dur); const cu=document.getElementById('f-custom'); if(cu) cu.value=''; syncStartLabel(); markDurSel(); };
+  });
+  const custom = document.getElementById('f-custom');
+  if(custom){
+    custom.oninput = () => {
+      const v = Math.max(5, Math.min(240, Number(custom.value)||0));
+      if(custom.value){ S.selDuration = v; }
+      markDurSel(); syncStartLabel();
+    };
+    custom.onclick = () => { if(custom.value) S.selDuration = Math.max(5,Math.min(240,Number(custom.value)||45)); markDurSel(); };
+  }
+  // Subtask qo'shish
+  const addSub = () => {
+    const inp = document.getElementById('f-subtask');
+    const v = (inp.value||'').trim();
+    if(!v) return;
+    if(S.draftSubtasks.length >= 20){ setErr('Ko\'pi bilan 20 ta bosqich'); return; }
+    S.draftSubtasks.push(v); inp.value=''; renderSubDraft(); inp.focus();
+  };
+  document.getElementById('f-subtask-add').onclick = addSub;
+  document.getElementById('f-subtask').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); addSub(); } });
+  app.querySelectorAll('[data-del]').forEach(x => { x.onclick = () => { S.draftSubtasks.splice(Number(x.dataset.del),1); renderSubDraft(); }; });
+  // Boshlash
+  document.getElementById('f-start').onclick = doStart;
+  const os = document.getElementById('open-stats');
+  if(os) os.onclick = openStats;
+  const oa = document.getElementById('open-activity');
+  if(oa) oa.onclick = openActivity;
+  // Strong Focus toggle
+  const sfToggle = document.getElementById('sf-toggle');
+  if(sfToggle) sfToggle.onclick = async () => {
+    S.strongFocus = !S.strongFocus;
+    sfToggle.classList.toggle('on', S.strongFocus);
+    const cfg = document.getElementById('sf-config');
+    if(!cfg) return;
+    if(S.strongFocus){
+      cfg.style.display = '';
+      if(!S.blockData){ cfg.innerHTML = '<div class="sf-loading">Yuklanmoqda…</div>'; try{ S.blockData = await F.blocksGet(); }catch(e){ S.blockData = {categories:[],customDomains:[]}; } }
+      renderSfConfig();
+    } else { cfg.style.display = 'none'; }
+  };
+  if(S.strongFocus && S.blockData) renderSfConfig();
+  // Intervention on/off
+  const ivToggle = document.getElementById('iv-toggle');
+  if(ivToggle) ivToggle.onclick = async () => { S.interventionEnabled = !S.interventionEnabled; ivToggle.classList.toggle('on', S.interventionEnabled); try{ await F.settingsSet({ interventionEnabled: S.interventionEnabled }); }catch(e){} };
+  if(F.settingsGet){ F.settingsGet().then(s=>{ if(s && typeof s.interventionEnabled==='boolean'){ S.interventionEnabled = s.interventionEnabled; const t=document.getElementById('iv-toggle'); if(t) t.classList.toggle('on', S.interventionEnabled); } }).catch(()=>{}); }
+  bindHistory();
+}
+
+// Tayyor sayt tugmalari (default o'chiq) — foydalanuvchi qaysi biriga kirmaslikni tanlaydi.
+const SITE_PRESETS = [
+  { label:'YouTube', domain:'youtube.com' },
+  { label:'Instagram', domain:'instagram.com' },
+  { label:'TikTok', domain:'tiktok.com' },
+  { label:'Facebook', domain:'facebook.com' },
+  { label:'Twitter / X', domain:'x.com' },
+  { label:'Pinterest', domain:'pinterest.com' },
+  { label:'Reddit', domain:'reddit.com' },
+  { label:'Telegram Web', domain:'web.telegram.org' },
+];
+function sfBlockedList(){ return (S.blockData && S.blockData.customDomains || []).map(d=>String(d).toLowerCase()); }
+async function sfToggleDomain(domain){
+  const d = String(domain).toLowerCase();
+  const list = sfBlockedList();
+  S.blockData.customDomains = S.blockData.customDomains || [];
+  if(list.includes(d)){
+    S.blockData.customDomains = S.blockData.customDomains.filter(x=>String(x).toLowerCase()!==d);
+    try{ await F.removeBlockDomain(d); }catch(e){}
+  } else {
+    S.blockData.customDomains.push(d);
+    try{ await F.addBlockDomain(d); }catch(e){}
+  }
+  renderSfConfig();
+}
+function renderSfConfig(){
+  const cfg = document.getElementById('sf-config');
+  if(!cfg || !S.blockData) return;
+  const blocked = new Set(sfBlockedList());
+  const presetDomains = new Set(SITE_PRESETS.map(p=>p.domain));
+  const chips = SITE_PRESETS.map(p=>{
+    const on = blocked.has(p.domain);
+    return `<button class="sf-chip ${on?'on':''}" data-site="${p.domain}">${on?'🚫 ':''}${esc(p.label)}</button>`;
+  }).join('');
+  const customOnly = (S.blockData.customDomains||[]).filter(d=>!presetDomains.has(String(d).toLowerCase()));
+  const customChips = customOnly.map(d=>`<span class="sf-domain">${esc(d)}<i data-rmdom="${esc(d)}">✕</i></span>`).join('');
+  cfg.innerHTML =
+    `<div class="sf-hint">Focus paytida ochilmasin degan saytlarni tanlang:</div>`+
+    `<div class="sf-cats">${chips}</div>`+
+    `<div class="sf-add"><input class="input" id="sf-dom" maxlength="120" placeholder="Boshqa sayt (masalan: twitch.tv)" autocomplete="off"><button class="btn secondary" id="sf-dom-add" style="width:auto;padding:11px 15px">➕</button></div>`+
+    (customChips?`<div class="sf-domains">${customChips}</div>`:'')+
+    `<div class="sf-note">Faqat tanlangan saytlar Focus davomida NIEX ichida ochilmaydi. Blok-sahifada "15 daqiqaga ruxsat" bor.</div>`;
+  cfg.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>sfToggleDomain(b.dataset.site));
+  const add=document.getElementById('sf-dom-add'), inp=document.getElementById('sf-dom');
+  const doAdd=async()=>{ const v=(inp.value||'').trim(); if(!v) return; try{ const r=await F.addBlockDomain(v); if(r&&r.ok){ S.blockData.customDomains=S.blockData.customDomains||[]; if(!sfBlockedList().includes(String(r.domain).toLowerCase())) S.blockData.customDomains.push(r.domain); renderSfConfig(); } }catch(e){} };
+  if(add) add.onclick=doAdd;
+  if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doAdd(); } });
+  cfg.querySelectorAll('[data-rmdom]').forEach(x=>x.onclick=async()=>{ const d=x.dataset.rmdom; try{ await F.removeBlockDomain(d); }catch(e){} S.blockData.customDomains=(S.blockData.customDomains||[]).filter(z=>z!==d); renderSfConfig(); });
+}
+function markDurSel(){
+  const presets = (S.data && S.data.durationPresets) || [25,45,60,90];
+  app.querySelectorAll('.chip[data-dur]').forEach(c => c.classList.toggle('sel', Number(c.dataset.dur)===S.selDuration));
+  const cc = document.getElementById('chip-custom');
+  if(cc) cc.classList.toggle('sel', !presets.includes(S.selDuration));
+}
+function renderSubDraft(){
+  const list = document.getElementById('f-sub-list');
+  list.innerHTML = S.draftSubtasks.map((t,i)=>`<div class="sub-row"><div class="st-title">${esc(t)}</div><div class="x" data-del="${i}" title="O'chirish">✕</div></div>`).join('');
+  list.querySelectorAll('[data-del]').forEach(x => { x.onclick = () => { S.draftSubtasks.splice(Number(x.dataset.del),1); renderSubDraft(); }; });
+}
+function syncStartLabel(){ const b=document.getElementById('f-start'); if(b) b.textContent = `🎯 Focusni boshlash — ${S.selDuration} daq`; }
+function setErr(m){ const e=document.getElementById('f-err'); if(e) e.textContent = m||''; }
+
+async function doStart(){
+  setErr('');
+  const goal = (document.getElementById('f-goal').value||'').trim();
+  const task = (document.getElementById('f-task').value||'').trim();
+  const reason = (document.getElementById('f-reason').value||'').trim();
+  const success = (document.getElementById('f-success').value||'').trim();
+  if(!goal){ setErr('Maqsadni yozing'); document.getElementById('f-goal').focus(); return; }
+  if(!task){ setErr('Vazifani yozing'); document.getElementById('f-task').focus(); return; }
+  const btn = document.getElementById('f-start'); btn.disabled=true;
+  try{
+    const r = await F.start({ goal, task, reason, successCriteria: success, durationMinutes: S.selDuration, subtasks: S.draftSubtasks, strongFocus: S.strongFocus });
+    if(!r || !r.ok){ setErr((r&&r.error) || 'Boshlab bo\'lmadi'); btn.disabled=false; return; }
+    S.draftSubtasks = []; S.wasActive = true;
+    await refresh();
+  }catch(e){ setErr('Xatolik: '+(e&&e.message||e)); btn.disabled=false; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Active (faol sessiya)
+// ══════════════════════════════════════════════════════════════
+function viewActive(){
+  const a = S.data.activeSession;
+  const paused = a.state==='paused';
+  const total = (a.durationMinutes||1)*60000;
+  const remaining = paused ? (a.remainingMs||0) : Math.max(0, (a.endsAt||0) - Date.now());
+  const progress = Math.max(0, Math.min(1, 1 - remaining/total));
+  const circ = 2*Math.PI*100;
+  const offset = circ * progress;
+
+  const sp = a.subtaskProgress || {done:0,total:0};
+  const subs = (a.subtasks||[]).map(s => `<div class="sub-row">
+      <button class="chk ${s.done?'on':''}" data-st="${s.id}">${s.done?'✓':''}</button>
+      <div class="st-title ${s.done?'done':''}">${esc(s.title)}</div>
+    </div>`).join('');
+
+  return `<div class="card active-wrap fade">
+    <div class="focus-on">Hozir e'tibordasiz</div>
+    <div class="active-goal">${esc(a.goal)}</div>
+    <div class="active-task">${esc(a.task)}</div>
+
+    <div class="ring-wrap">
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#00E5A0"/><stop offset="100%" stop-color="#06B6D4"/>
+        </linearGradient></defs>
+        <circle class="ring-bg" cx="110" cy="110" r="100"/>
+        <circle class="ring-fg" id="ring" cx="110" cy="110" r="100"
+          stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-time" id="ring-time">${fmtClock(remaining)}</div>
+        <div class="ring-label">${paused?'pauza':'qoldi'}</div>
+      </div>
+    </div>
+    ${paused ? '<div class="paused-badge">⏸ Pauza qilingan</div>' : ''}
+
+    ${ (a.subtasks&&a.subtasks.length) ? `<div style="margin-top:20px;text-align:left">
+      <div class="label" style="display:flex;justify-content:space-between">
+        <span>Bosqichlar</span><span style="color:var(--accent)">${sp.done} / ${sp.total}</span>
+      </div>
+      <div class="sub-list">${subs}</div>
+    </div>` : '' }
+
+    <div class="browse-note">💡 Endi <b>erkin izlaning</b> — Google, YouTube, Wikipedia, hujjatlar. Focus brauzingni bloklamaydi; taymer barcha varaqlarda ko'rinib turadi.</div>
+
+    <div class="btn-row" style="margin-top:18px">
+      ${ paused
+        ? '<button class="btn" id="a-resume">▶ Davom ettirish</button>'
+        : '<button class="btn secondary" id="a-pause">⏸ Pauza</button>' }
+      <button class="btn secondary" id="a-newtab">🔎 Yangi varaqda izlash</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn danger" id="a-end">✓ Sessiyani yakunlash</button>
+    </div>
+    <div class="err" id="a-err"></div>
+  </div>`;
+}
+
+function bindActive(){
+  const a = S.data.activeSession;
+  const pause = document.getElementById('a-pause');
+  const resume = document.getElementById('a-resume');
+  const end = document.getElementById('a-end');
+  const newtab = document.getElementById('a-newtab');
+  if(pause) pause.onclick = async () => { pause.disabled=true; await F.pause(); await refresh(); };
+  if(resume) resume.onclick = async () => { resume.disabled=true; await F.resume(); await refresh(); };
+  if(newtab) newtab.onclick = () => { try{ NAV && NAV.newTab && NAV.newTab(''); }catch(e){} };
+  if(end) end.onclick = async () => {
+    end.disabled=true;
+    const r = await F.end();
+    if(r && r.ok){ S.reflect = null; S.wasActive = true; await refresh(); }
+    else { end.disabled=false; const e=document.getElementById('a-err'); if(e) e.textContent = (r&&r.error)||'Yakunlab bo\'lmadi'; }
+  };
+  // Subtask belgilash (faol sessiyada)
+  app.querySelectorAll('.chk[data-st]').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.st;
+      const cur = (a.subtasks.find(x=>x.id===id)||{}).done;
+      btn.classList.toggle('on'); // optimistik
+      await F.setSubtask(id, !cur, a.id);
+      await refresh();
+    };
+  });
+}
+
+function startTicker(){
+  stopTicker();
+  const a = S.data && S.data.activeSession;
+  if(!a || a.state!=='active') return;   // pauzada tiker yurmaydi
+  const total = (a.durationMinutes||1)*60000;
+  const circ = 2*Math.PI*100;
+  ticker = setInterval(() => {
+    const remaining = Math.max(0, (a.endsAt||0) - Date.now());
+    const tEl = document.getElementById('ring-time');
+    const rEl = document.getElementById('ring');
+    if(tEl) tEl.textContent = fmtClock(remaining);
+    if(rEl){ const progress = Math.max(0, Math.min(1, 1 - remaining/total)); rEl.setAttribute('stroke-dashoffset', (circ*progress).toFixed(1)); }
+    if(remaining<=0){ stopTicker(); setTimeout(refresh, 600); } // backend yakunlaydi
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Reflection (yakuniy)
+// ══════════════════════════════════════════════════════════════
+function viewReflection(){
+  const s = S.reflect || {};
+  const sp = s.subtaskProgress || {done:0,total:0};
+  const subs = (s.subtasks||[]).map(x => `<div class="sub-row">
+      <button class="chk ${x.done?'on':''}" data-st="${x.id}">${x.done?'✓':''}</button>
+      <div class="st-title ${x.done?'done':''}">${esc(x.title)}</div>
+    </div>`).join('');
+
+  const rates = Object.keys(RATINGS).map(k => `<button class="rate ${S.rating===k?'sel':''}" data-rate="${k}">
+      <div class="ri">${RATINGS[k][0]}</div><div class="rl">${RATINGS[k][1]}</div></button>`).join('');
+  const pills = Object.keys(COMPLETION).map(k => `<button class="pill ${S.completion===k?'sel':''}" data-comp="${k}">${COMPLETION[k]}</button>`).join('');
+
+  return `<div class="card fade">
+    <div class="card-title">✓ Focus sessiyasi yakunlandi</div>
+    <div class="card-sub">Qisqa mulohaza — bu keyingi sessiyalaringizni yaxshilashga yordam beradi (ixtiyoriy).</div>
+
+    <div style="margin:6px 0 18px">
+      <div class="summary-row"><div class="sk">Rejalashtirilgan</div><div class="sv">${fmtDur(s.durationMinutes)}</div></div>
+      <div class="summary-row"><div class="sk">Focusda</div><div class="sv" style="color:var(--accent)">${fmtDur(s.focusedMinutes)}</div></div>
+      <div class="summary-row"><div class="sk">Maqsad</div><div class="sv">${esc(s.goal)}</div></div>
+      <div class="summary-row"><div class="sk">Vazifa</div><div class="sv">${esc(s.task)}</div></div>
+      ${ (s.subtasks&&s.subtasks.length) ? `<div class="summary-row"><div class="sk">Bosqichlar</div><div class="sv">${sp.done} / ${sp.total} bajarildi</div></div>` : '' }
+    </div>
+
+    ${ (s.subtasks&&s.subtasks.length) ? `<div class="field"><label class="label">Bosqichlarni to'g'rilash</label><div class="sub-list">${subs}</div></div>` : '' }
+
+    <div class="field"><label class="label">Qanday o'tdi?</label><div class="rate-row">${rates}</div></div>
+    <div class="field"><label class="label">Natija</label><div class="pill-row">${pills}</div></div>
+    <div class="field"><label class="label" for="r-note">Keyingi safar nimani yaxshilaysiz? <span class="opt">— ixtiyoriy</span></label>
+      <textarea class="textarea" id="r-note" maxlength="500" placeholder="Masalan: Telefon boshqa xonada tursin"></textarea></div>
+
+    <div class="btn-row">
+      <button class="btn secondary" id="r-skip">O'tkazib yuborish</button>
+      <button class="btn" id="r-save">💾 Saqlash</button>
+    </div>
+  </div>` + viewHistory();
+}
+
+function bindReflection(){
+  app.querySelectorAll('[data-rate]').forEach(b => b.onclick = () => { S.rating = b.dataset.rate; app.querySelectorAll('[data-rate]').forEach(x=>x.classList.toggle('sel', x===b)); });
+  app.querySelectorAll('[data-comp]').forEach(b => b.onclick = () => { const k=b.dataset.comp; S.completion = (S.completion===k? null : k); app.querySelectorAll('[data-comp]').forEach(x=>x.classList.toggle('sel', x.dataset.comp===S.completion)); });
+  app.querySelectorAll('.chk[data-st]').forEach(btn => btn.onclick = async () => {
+    const id = btn.dataset.st;
+    const cur = ((S.reflect.subtasks||[]).find(x=>x.id===id)||{}).done;
+    btn.classList.toggle('on');
+    const r = await F.setSubtask(id, !cur, S.reflect.id);
+    // lokal holatni yangilaymiz (backend public shape qaytarmaydi)
+    const st = (S.reflect.subtasks||[]).find(x=>x.id===id); if(st) st.done=!cur;
+  });
+  document.getElementById('r-skip').onclick = async () => { S.reflect=null; S.rating=null; S.completion=null; await refresh(); };
+  document.getElementById('r-save').onclick = async () => {
+    const note = (document.getElementById('r-note').value||'').trim();
+    const btn = document.getElementById('r-save'); btn.disabled=true;
+    await F.saveReflection(S.reflect.id, { rating: S.rating, completionStatus: S.completion, note });
+    S.reflect=null; S.rating=null; S.completion=null; await refresh();
+  };
+  bindHistory();
+}
+
+// ══════════════════════════════════════════════════════════════
+// TARIX (Setup va Reflection ostida)
+// ══════════════════════════════════════════════════════════════
+function viewHistory(){
+  const h = (S.data && S.data.history) || [];
+  const meaningful = h.filter(s => (s.focusedMinutes||0) >= 1 || s.reflection);
+  let inner;
+  if(!meaningful.length){
+    inner = `<div class="empty">Hali sessiyalar yo'q.<br>Birinchi Focus sessiyangizni boshlang 🎯</div>`;
+  } else {
+    inner = meaningful.slice(0,10).map(s => {
+      const [lbl,color] = STATE_LABEL[s.state] || ['—','#8ea3c4'];
+      const rate = s.reflection && s.reflection.rating ? ' · '+ (RATINGS[s.reflection.rating]? RATINGS[s.reflection.rating][0] : '') : '';
+      return `<div class="hist-item">
+        <div class="hist-dot" style="background:${color}"></div>
+        <div class="hist-main">
+          <div class="hist-goal">${esc(s.goal || s.task || 'Focus sessiyasi')}</div>
+          <div class="hist-meta">${fmtDay(s.startedAt)} · ${esc(lbl)}${rate}</div>
+        </div>
+        <div class="hist-min">${fmtDur(s.focusedMinutes)}</div>
+      </div>`;
+    }).join('');
+  }
+  return `<div class="card"><div class="card-title">Tarix</div><div style="margin-top:8px">${inner}</div></div>`;
+}
+function bindHistory(){ /* hozircha statik ro'yxat; batafsil ko'rinish keyingi bosqichda */ }
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Statistika (PART 4) — shaffof metrikalar
+// ══════════════════════════════════════════════════════════════
+const WD = ['Ya','Du','Se','Ch','Pa','Ju','Sh']; // 0 = Yakshanba
+const CAT_LABEL = { productive:'Foydali', necessary:'Zarur', urgent:'Shoshilinch', communication:'Aloqa', research:'Izlanish', entertainment:"Ko'ngilochar", social:'Ijtimoiy', unknown:"Noma'lum" };
+
+async function openStats(){
+  S.view = 'stats'; S.analytics = null; render();
+  try { S.analytics = await F.analytics(); } catch(e){ S.analytics = null; }
+  render();
+}
+
+function viewStats(){
+  const back = `<button class="btn secondary" id="stats-back" style="width:auto;margin-bottom:16px;padding:9px 16px">← Orqaga</button>`;
+  const a = S.analytics;
+  if(!a){ return back + `<div class="loading">Statistika yuklanmoqda…</div>`; }
+
+  const dm = a.trend.focusDeltaMinutes || 0;
+  const cls = dm>0 ? 'up' : (dm<0 ? 'down' : 'flat');
+  const arrow = dm>0 ? '▲' : (dm<0 ? '▼' : '•');
+  const trendChip = `<span class="trend ${cls}">${arrow} ${fmtDur(Math.abs(dm))}${a.lastWeek.focusMinutes>0?` (${dm>=0?'+':''}${a.trend.focusDeltaPct}%)`:''}</span>`;
+
+  const days = a.last7Days || [];
+  const maxM = Math.max(1, ...days.map(d=>d.minutes||0));
+  const bars = days.map((d,i)=>{
+    const today = i===days.length-1;
+    const h = Math.max(3, Math.round((d.minutes/maxM)*92));
+    return `<div class="bar-col">
+      <div class="bar-val">${d.minutes>0?d.minutes:''}</div>
+      <div class="bar ${d.minutes>0?'':'empty'} ${today?'today':''}" style="height:${d.minutes>0?h:3}px"></div>
+      <div class="bar-lbl ${today?'today':''}">${WD[d.weekday]}</div>
+    </div>`;
+  }).join('');
+  const dots = days.map(d=>`<div class="dot-day"><div class="dot ${d.minutes>0?'on':''}"></div><div class="dot-l">${WD[d.weekday]}</div></div>`).join('');
+
+  const w = a.week;
+  const metrics = `<div class="metric-grid">
+    <div class="metric"><div class="mv">${w.sessions}</div><div class="ml">Sessiya</div></div>
+    <div class="metric"><div class="mv">${w.completed}</div><div class="ml">Yakunlangan</div></div>
+    <div class="metric"><div class="mv">${w.completionRate}%</div><div class="ml">Yakunlanish</div></div>
+    <div class="metric"><div class="mv">${fmtDur(w.avgSessionMinutes)}</div><div class="ml">O'rtacha</div></div>
+    <div class="metric"><div class="mv">${w.activeDays}/7</div><div class="ml">Faol kun</div></div>
+    <div class="metric"><div class="mv">${w.tasksCompleted}</div><div class="ml">Bosqich</div></div>
+  </div>`;
+
+  const goals = a.goals || [];
+  const gmax = Math.max(1, ...goals.map(g=>g.minutes||0));
+  const goalRows = goals.length ? goals.map(g=>`<div class="goal-row">
+      <div class="goal-info"><span class="goal-name">${esc(g.goal)}</span><span class="goal-min">${fmtDur(g.minutes)}</span></div>
+      <div class="goal-track"><div class="goal-fill" style="width:${Math.max(3,Math.round(g.minutes/gmax*100))}%"></div></div>
+      <div class="goal-sub">${g.sessions} sessiya</div>
+    </div>`).join('') : `<div class="empty">Hali maqsadlar yo'q</div>`;
+
+  const dx = a.distractions || { total:0, returnedToFocus:0, minutesOutside:0, byCategory:{} };
+  const cats = Object.keys(dx.byCategory||{}).sort((x,y)=>dx.byCategory[y]-dx.byCategory[x]);
+  const catChips = cats.map(c=>`<span class="cat-chip"><b>${dx.byCategory[c]}</b> ${CAT_LABEL[c]||c}</span>`).join('');
+  const dxCard = `<div class="card fade">
+    <div class="card-title">Chalg'ishlar — bu hafta</div>
+    <div class="card-sub">Focus paytida NIEX'dan chiqishlar. Bu ayb emas — o'zingizni tushunish uchun.</div>
+    <div class="metric-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="metric"><div class="mv">${dx.total}</div><div class="ml">Chiqish</div></div>
+      <div class="metric"><div class="mv" style="color:var(--accent)">${dx.returnedToFocus}</div><div class="ml">Qaytdi</div></div>
+      <div class="metric"><div class="mv">${fmtDur(dx.minutesOutside)}</div><div class="ml">Tashqarida</div></div>
+    </div>
+    ${catChips?`<div class="cat-chips">${catChips}</div>`:''}
+  </div>`;
+
+  return back + `
+    <div class="card fade">
+      <div class="card-title">Bu hafta</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
+        <div style="font-size:34px;font-weight:800">${fmtDur(w.focusMinutes)}</div>
+        ${trendChip}
+      </div>
+      <div class="card-sub" style="margin-top:8px">O'tgan hafta: ${fmtDur(a.lastWeek.focusMinutes)} · Kun seriya: ${a.streak.current} · Jami: ${fmtDur(a.totals.minutes)}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">So'nggi 7 kun</div>
+      <div class="bars">${bars}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Izchillik</div>
+      <div class="card-sub">Focus qilgan kunlar (so'nggi 7 kun)</div>
+      <div class="dots" style="margin-top:12px">${dots}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Hafta ko'rsatkichlari</div>
+      <div style="margin-top:12px">${metrics}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Maqsadlar bo'yicha</div>
+      <div style="margin-top:12px">${goalRows}</div>
+    </div>
+    ${dxCard}
+  `;
+}
+
+function bindStats(){
+  const b = document.getElementById('stats-back');
+  if(b) b.onclick = () => { S.view='setup'; render(); };
+}
+
+// ══════════════════════════════════════════════════════════════
+// KO'RINISH: Faoliyatim (Activity Intelligence — Parental Control PART 1-4)
+// Foydalanuvchining O'ZI ko'radigan statistika. Neytral, ayblovsiz (§6/§8).
+// ══════════════════════════════════════════════════════════════
+const ACT_LABEL = { scrolling:'Scroll (feed)', video_watching:'Video ko\'rish', searching:'Qidiruv', reading:'O\'qish', chat:'Suhbat', navigation:'Navigatsiya', focus_work:'Focus ish', idle:'Bo\'sh', blocked_content:'Bloklangan', unknown:'Boshqa' };
+const ACT_ICON = { scrolling:'📱', video_watching:'▶️', searching:'🔍', reading:'📖', chat:'💬', navigation:'🧭', focus_work:'🎯', idle:'⏸️', blocked_content:'🛡️', unknown:'•' };
+const CAT_LABEL2 = { education:'Ta\'lim', programming:'Dasturlash', technology:'Texnologiya', science:'Fan', research:'Izlanish', news:'Yangiliklar', productivity:'Samaradorlik', entertainment:'Ko\'ngilochar', gaming:'O\'yin', shortform_video:'Qisqa video', podcast:'Podkast', social_media:'Ijtimoiy tarmoq', communication:'Aloqa', sports:'Sport', shopping:'Xarid', other:'Boshqa' };
+function fmtMs(ms){ return fmtDur(Math.round((Number(ms)||0)/60000)); }
+function platLabel(k){ if(!k) return 'Boshqa'; return String(k).charAt(0).toUpperCase()+String(k).slice(1); }
+
+async function openActivity(){
+  S.view='activity'; S.actToday=undefined; S.actWeek=undefined; render();
+  try { S.actToday = await F.activityToday(); } catch(e){ S.actToday=null; }
+  try { S.actWeek = await F.activityWeek(); } catch(e){ S.actWeek=null; }
+  render();
+}
+
+function donutSvg(useful, low, unknown){
+  const total = (useful+low+unknown) || 0;
+  const R=54, C=2*Math.PI*R;
+  let off=0, arcs='';
+  if(total>0){
+    [[useful,'var(--accent)'],[low,'var(--danger)'],[unknown,'var(--neutral)']].forEach(([v,col])=>{
+      const len=(v/total)*C;
+      if(len>0.5){ arcs+=`<circle cx="66" cy="66" r="${R}" fill="none" stroke="${col}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" stroke-linecap="butt"/>`; }
+      off+=len;
+    });
+  }
+  const pct = total>0 ? Math.round((useful/total)*100) : 0;
+  return `<div class="donut"><svg width="132" height="132" viewBox="0 0 132 132">
+    <circle cx="66" cy="66" r="${R}" fill="none" stroke="var(--panel-2)" stroke-width="16"/>${arcs}
+  </svg><div class="dc"><div class="dv">${pct}%</div><div class="dl">FOYDALI</div></div></div>`;
+}
+
+function brkRows(map, labelFn, iconFn, color, limit){
+  let entries = Object.keys(map||{}).map(k=>({key:k, ms:map[k]})).filter(e=>e.ms>0).sort((a,b)=>b.ms-a.ms);
+  if(limit) entries = entries.slice(0,limit);
+  if(!entries.length) return '<div class="empty">Ma\'lumot yo\'q</div>';
+  const max = Math.max(1, ...entries.map(e=>e.ms));
+  return entries.map(e=>{
+    const w = Math.max(3, Math.round(e.ms/max*100));
+    return `<div class="brk-row">
+      <div class="brk-ic">${iconFn?iconFn(e.key):'•'}</div>
+      <div class="brk-main">
+        <div class="brk-top"><span class="brk-name">${esc(labelFn(e.key))}</span><span class="brk-val">${fmtMs(e.ms)}</span></div>
+        <div class="brk-track"><div class="brk-fill" style="width:${w}%;background:${color||'var(--accent)'}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewActivity(){
+  const back = `<button class="btn secondary" id="act-back" style="width:auto;margin-bottom:16px;padding:9px 16px">← Orqaga</button>`;
+  const t = S.actToday, wk = S.actWeek;
+  if(t===undefined || wk===undefined){ return back + `<div class="loading">Faoliyat yuklanmoqda…</div>`; }
+  if(t===null){ return back + `<div class="empty">Faoliyatni yuklab bo'lmadi. Qayta urinib ko'ring.</div>`; }
+
+  // ── Bugun ──
+  let todayCard;
+  if(!t.hasData){
+    todayCard = `<div class="card fade"><div class="card-title">Bugun</div>
+      <div class="empty">Hali ma'lumot yo'q.<br>Brauzerdan foydalansangiz, faoliyatingiz shu yerda ko'rinadi.</div></div>`;
+  } else {
+    const v = t.value;
+    const legend = `<div class="act-legend">
+      <div class="leg"><span class="sw" style="background:var(--accent)"></span><span class="ln">Foydali</span><span class="lv">${fmtMs(v.usefulMs)}</span></div>
+      <div class="leg"><span class="sw" style="background:var(--danger)"></span><span class="ln">Kam foydali</span><span class="lv">${fmtMs(v.lowValueMs)}</span></div>
+      <div class="leg"><span class="sw" style="background:var(--neutral)"></span><span class="ln">Aniqlanmagan</span><span class="lv">${fmtMs(v.unknownMs)}</span></div>
+    </div>`;
+    todayCard = `<div class="card fade">
+      <div class="card-title">Bugun — ${fmtMs(t.totalMs)} onlayn</div>
+      <div class="card-sub">Bu ayblov emas — o'z vaqtingizni tushunish uchun oyna.</div>
+      <div class="act-hero" style="margin-top:14px">${donutSvg(v.usefulMs, v.lowValueMs, v.unknownMs)}${legend}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Faoliyat turlari</div>
+      <div class="card-sub">Scroll, video, qidiruv, o'qish, suhbat — alohida.</div>
+      <div style="margin-top:12px">${brkRows(t.byType, k=>ACT_LABEL[k]||k, k=>ACT_ICON[k]||'•', 'var(--accent)')}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Platformalar</div>
+      <div style="margin-top:12px">${brkRows(t.byPlatform, platLabel, null, 'linear-gradient(90deg,var(--accent),#06B6D4)', 6)}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Kontent turlari</div>
+      <div style="margin-top:12px">${brkRows(t.byCategory, k=>CAT_LABEL2[k]||k, null, 'linear-gradient(90deg,#06B6D4,var(--accent))', 8)}</div>
+    </div>`;
+    if(t.distractionCount || t.blockedCount || t.focusMs){
+      todayCard += `<div class="card fade"><div class="card-title">Focus va xavfsizlik</div>
+        <div class="metric-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px">
+          <div class="metric"><div class="mv" style="color:var(--accent)">${fmtMs(t.focusMs)}</div><div class="ml">Focus vaqt</div></div>
+          <div class="metric"><div class="mv">${t.distractionCount}</div><div class="ml">Chalg'ish</div></div>
+          <div class="metric"><div class="mv">${t.blockedCount}</div><div class="ml">Bloklangan</div></div>
+        </div></div>`;
+    }
+  }
+
+  // ── Bu hafta + trend ──
+  let weekCard = '';
+  if(wk && wk.current && wk.current.hasData){
+    const c = wk.current;
+    let trendChip = '';
+    if(wk.hasPrevious && wk.trend){
+      const u = wk.trend.usefulMs;
+      if(u!=null){ const cls=u>0?'up':(u<0?'down':'flat'); const ar=u>0?'▲':(u<0?'▼':'•'); trendChip = `<span class="trend ${cls}">${ar} foydali ${u>=0?'+':''}${u}%</span>`; }
+    } else {
+      trendChip = `<span class="trend flat" style="opacity:.7">Oldingi hafta ma'lumoti yo'q</span>`;
+    }
+    weekCard = `<div class="card fade">
+      <div class="card-title">Bu hafta</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
+        <div style="font-size:30px;font-weight:800">${fmtMs(c.totalMs)}</div>${trendChip}
+      </div>
+      <div class="card-sub" style="margin-top:8px">Kunlik o'rtacha: ${fmtMs(c.dailyAverageMs)} · Foydali: ${fmtMs(c.value.usefulMs)} · Focus: ${fmtMs(c.focusMs)}</div>
+    </div>
+    <div class="card fade">
+      <div class="card-title">Haftalik top platformalar</div>
+      <div style="margin-top:12px">${brkRows(c.byPlatform, platLabel, null, 'linear-gradient(90deg,var(--accent),#06B6D4)', 6)}</div>
+    </div>`;
+  }
+
+  return back + todayCard + weekCard;
+}
+
+function bindActivity(){
+  const b = document.getElementById('act-back');
+  if(b) b.onclick = () => { S.view='setup'; render(); };
+}
+
+// ── Global tugmalar / hodisalar ───────────────────────────────
+document.getElementById('btn-home').onclick = () => { try{ NAV && NAV.goHome ? NAV.goHome() : (NAV && NAV.navigate && NAV.navigate('home.html')); }catch(e){} };
+
+// Boshqa oynada holat o'zgarsa (masalan timer tugasa) — sinxron.
+if(F && F.onState){
+  F.onState(s => {
+    if(!s) return;
+    // Refleksiya yoki Statistikada bo'lsak, jonli yangilanish uni buzmasin.
+    if(S.view==='reflection' || S.view==='stats' || S.view==='activity') { S.data = s; return; }
+    S.data = s;
+    route();
+  });
+}
+
+// Ishga tushirish
+if(!F){ S.view='nofocus'; render(); }
+else { refresh(); }
+
+// Pro obuna FAOLLASHGAN zahoti (premium-status-changed) — qayta tekshiramiz. Agar Focus
+//   "locked" ko'rinishida qolган bo'lса (Pro kech aniqlanсa), avtomatik unlock bo'ladi.
+try {
+  if (window.safenet_premium && typeof window.safenet_premium.onStatusChanged === 'function') {
+    window.safenet_premium.onStatusChanged(function(){ if (F) refresh(); });
+  }
+} catch(e) {}
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "manifest": {
+    "manifest_version": 2,
+    "name": "YouTube Comment Filter",
+    "version": "1.0.0",
+    "description": "Filters inappropriate comments on YouTube",
+    "permissions": ["https://youtube.com/*", "https://www.youtube.com/*"],
+    "content_scripts": [
+      {
+        "matches": ["https://youtube.com/*", "https://www.youtube.com/*"],
+        "js": ["youtube-filter.js"],
+        "run_at": "document_idle"
+      }
+    ]
+  },
+  "files": {
+    "youtube-filter.js": "(function() {\n  'use strict';\n  \n  const BAD_WORDS = [\n    'porn', 'xxx', 'nude', 'naked', 'nsfw', 'hentai', 'erotic',\n    'sex', 'viagra', 'casino', 'bitcoin', 'crypto',\n    'hate', 'racism', 'extremist'\n  ];\n  \n  function checkText(text) {\n    if (!text) return false;\n    const lower = text.toLowerCase();\n    return BAD_WORDS.some(word => lower.includes(word));\n  }\n  \n  function hideComments() {\n    // YouTube comment selectors (may vary)\n    const comments = document.querySelectorAll(\n      '#comment-text-content, .yt-simple-endpoint.style-scope.yt-formatted-string'\n    );\n    \n    comments.forEach(comment => {\n      try {\n        const text = comment.textContent || '';\n        if (checkText(text)) {\n          // Hide the comment container\n          let parent = comment;\n          for (let i = 0; i < 10; i++) {\n            parent = parent.parentElement;\n            if (!parent) break;\n            if (parent.getAttribute('data-test-id') === 'comment-item-container') {\n              parent.style.display = 'none';\n              break;\n            }\n          }\n        }\n      } catch (e) {}\n    });\n  }\n  \n  // Initial hide\n  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', hideComments);\n  } else {\n    hideComments();\n  }\n  \n  // Monitor for new comments\n  const observer = new MutationObserver(hideComments);\n  observer.observe(document.body, { childList: true, subtree: true });\n  \n  console.log('[SafeNet YouTube Comment Filter] Active');\n})();\n"
+  }
+}

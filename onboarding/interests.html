@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interests - NIEX</title>
+  <style>
+    body {
+      background: #0A0E1A;
+      color: #E8F0FE;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #111827;
+      border: 1px solid #1E2D45;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 550px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      position: sticky;
+      top: 0;
+      background: #111827;
+      padding-bottom: 20px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      width: 28px;
+      height: 28px;
+      background: #1A2235;
+      border: none;
+      border-radius: 7px;
+      color: #8892B0;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: inherit;
+    }
+
+    .close-btn:hover {
+      background: #243044;
+      color: #E8F0FE;
+    }
+
+    .description {
+      color: #6B7A99;
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .category {
+      margin-bottom: 24px;
+    }
+
+    .category-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #00E5A0;
+      margin-bottom: 12px;
+    }
+
+    .interests-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .interest-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: #1A2235;
+      border: 1px solid #1E2D45;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .interest-item:hover {
+      background: #243044;
+      border-color: #00E5A0;
+    }
+
+    .interest-item input[type="checkbox"] {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+    }
+
+    .interest-item label {
+      flex: 1;
+      cursor: pointer;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .interest-item input[type="checkbox"]:checked + label {
+      color: #00E5A0;
+      font-weight: 600;
+    }
+
+    .counter {
+      color: #6B7A99;
+      font-size: 12px;
+      margin: 16px 0;
+      padding: 10px;
+      background: rgba(0, 229, 160, 0.05);
+      border-radius: 6px;
+      border-left: 3px solid #00E5A0;
+    }
+
+    .counter-value {
+      color: #00E5A0;
+      font-weight: 600;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-back {
+      background: #1A2235;
+      color: #8892B0;
+      border: 1px solid #1E2D45;
+    }
+
+    .btn-back:hover {
+      background: #243044;
+      color: #E8F0FE;
+    }
+
+    .btn-finish {
+      background: linear-gradient(135deg, #00E5A0, #00C885);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .btn-finish:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(0, 229, 160, 0.3);
+    }
+
+    .btn-finish:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">🎯 Your Interests</div>
+      <button class="close-btn" id="closeBtn">✕</button>
+    </div>
+
+    <p class="description">Select one or more interests to personalize your experience</p>
+
+    <div id="categoriesContainer"></div>
+
+    <div class="counter">
+      ✓ Selected: <span class="counter-value" id="selectedCount">0</span> interest<span id="pluralS">s</span>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-back" id="backBtn">Back</button>
+      <button class="btn-finish" id="finishBtn">Finish</button>
+    </div>
+  </div>
+
+  <script src="profile-service.js"></script>
+  <script src="interests.js"></script>
+</body>
+</html>

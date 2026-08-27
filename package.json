@@ -1,0 +1,122 @@
+{
+    "name": "niex-browser",
+    "version": "1.0.3",
+    "description": "AI-powered safe browser (Groq / OpenRouter / Gemini via safenet-ai.js)",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "dev": "electron . --debug",
+        "build-win": "electron-builder --win",
+        "build-mac": "electron-builder --mac",
+        "build-linux": "electron-builder --linux",
+        "publish-win": "electron-builder --win --publish always"
+    },
+    "keywords": [
+        "browser",
+        "ai",
+        "content-filter",
+        "safe-browsing"
+    ],
+    "author": "NIEX Ecosystem",
+    "license": "MIT",
+    "dependencies": {
+        "electron-updater": "^6.8.9",
+        "firebase": "^12.13.0",
+        "node-fetch": "^2.7.0"
+    },
+    "devDependencies": {
+        "asar": "^3.2.0",
+        "electron": "^42.1.0",
+        "electron-builder": "^26.8.1"
+    },
+    "build": {
+        "appId": "com.niex.browser",
+        "productName": "NIEX Browser",
+        "icon": "assets/icon.ico",
+        "afterPack": "./afterPack.js",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "**/*",
+            "!**/*.ts",
+            "!*.map",
+            "!**/.env",
+            "!**/.env.*",
+            "!ai-gateway/state.json",
+            "!set-keys.bat",
+            "!**/*.bat",
+            "!afterPack.js",
+            "!.build-backup",
+            "!.build-backup/**/*",
+            "!main.js.backup",
+            "!main.js.stub-broken",
+            "!main.js.fixed",
+            "!**/*.local-backup",
+            "!**/*.md",
+            "!**/*.txt",
+            "!tools",
+            "!tools/**/*",
+            "!tests",
+            "!tests/**/*",
+            "!failed_injections",
+            "!failed_injections/**/*",
+            "!mvp_uchun_miya",
+            "!mvp_uchun_miya/**/*",
+            "!dist",
+            "!dist/**/*",
+            "!.venv",
+            "!.venv/**/*",
+            "!.vscode",
+            "!.vscode/**/*",
+            "!.git",
+            "!.git/**/*"
+        ],
+        "extraResources": [
+            { "from": "assets/icon.ico", "to": "icon.ico" },
+            { "from": "assets/icon.png", "to": "icon.png" }
+        ],
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "antigravty01-droid",
+                "repo": "niex-releases",
+                "releaseType": "release"
+            }
+        ],
+        "win": {
+            "executableName": "NIEX Browser",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64",
+                        "ia32"
+                    ]
+                }
+            ],
+            "icon": "assets/icon.ico",
+            "artifactName": "NIEX-Browser-Setup-${version}-${arch}.${ext}"
+        },
+        "mac": {
+            "target": "dmg",
+            "icon": "assets/icon.icns"
+        },
+        "linux": {
+            "target": "AppImage",
+            "icon": "assets/icon.png"
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "NIEX Browser",
+            "installerIcon": "assets/icon.ico",
+            "uninstallerIcon": "assets/icon.ico",
+            "installerHeaderIcon": "assets/icon.ico",
+            "deleteAppDataOnUninstall": false
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+  "manifest": {
+    "manifest_version": 2,
+    "name": "Simple Ad Blocker",
+    "version": "1.0.0",
+    "description": "Simple extension to block common ad networks",
+    "permissions": ["*://*/*"],
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["adblock.js"],
+        "run_at": "document_start",
+        "all_frames": true
+      }
+    ],
+    "icons": {
+      "128": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect fill='%2300E5A0' width='128' height='128'/><text x='50%' y='50%' font-size='60' fill='white' text-anchor='middle' dy='.3em'>⛔</text></svg>"
+    }
+  },
+  "files": {
+    "adblock.js": "(function() {\n  'use strict';\n  \n  // Ad blocking patterns\n  const AD_DOMAINS = [\n    'ads.google.com',\n    'pagead2.googlesyndication.com',\n    'googleadservices.com',\n    'doubleclick.net',\n    'ads.yahoo.com',\n    'ads.facebook.com',\n    'amazon-adsystem.com',\n    'adn.ebscohost.com',\n    'advertising.com',\n    'atdmt.com',\n    'adserver.com',\n    'ads.msn.com',\n    'ads-bid.twitter.com',\n    'ads.linkedin.com'\n  ];\n  \n  const AD_SELECTORS = [\n    'iframe[src*=\"ads\"]',\n    'iframe[src*=\"google\"]',\n    'div[data-ad-format]',\n    'div[id*=\"google_ads\"]',\n    'div[id*=\"ad\"][id*=\"\\_\"]',\n    'ins.adsbygoogle',\n    '.advertisement',\n    '.ads',\n    '.ad-banner',\n    '[class*=\"ad-\"]',\n    '[class*=\"advert\"]',\n    'a[href*=\"ads.\"]',\n    'a[href*=\"ad?\"]'\n  ];\n  \n  function blockElements() {\n    // Block script tags loading from ad domains\n    const scripts = document.querySelectorAll('script[src]');\n    scripts.forEach(script => {\n      const src = script.src || '';\n      if (AD_DOMAINS.some(domain => src.includes(domain))) {\n        script.remove();\n      }\n    });\n    \n    // Block iframes from ad domains\n    const iframes = document.querySelectorAll('iframe[src]');\n    iframes.forEach(iframe => {\n      const src = iframe.src || '';\n      if (AD_DOMAINS.some(domain => src.includes(domain))) {\n        iframe.style.display = 'none';\n        iframe.style.visibility = 'hidden';\n        iframe.style.height = '0';\n      }\n    });\n    \n    // Block ad elements by selector\n    AD_SELECTORS.forEach(selector => {\n      try {\n        document.querySelectorAll(selector).forEach(el => {\n          el.style.display = 'none !important';\n          el.style.visibility = 'hidden !important';\n        });\n      } catch (e) {}\n    });\n  }\n  \n  // Block on load\n  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', blockElements);\n  } else {\n    blockElements();\n  }\n  \n  // Block dynamically added ads\n  const observer = new MutationObserver(blockElements);\n  observer.observe(document.body, { childList: true, subtree: true });\n  \n  // Log to console\n  console.log('[SafeNet Ad Blocker] Active and blocking ads');\n})();\n"
+  }
+}

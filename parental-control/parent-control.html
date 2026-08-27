@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<title>Farzandlarni boshqarish — NIEX</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: #0F1623; color: #E8F0FE; padding: 32px; min-height: 100vh; }
+  .container { max-width: 900px; margin: auto; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .title { font-size: 22px; font-weight: 800; }
+  .subtitle { font-size: 12px; color: #4a5568; margin-top: 4px; }
+  .btn-primary { background: linear-gradient(135deg, #00E5A0, #00C885); color: #0A0E1A; border: none; padding: 10px 18px; border-radius: 9px; font-weight: 700; cursor: pointer; font-size: 13px; }
+  .btn-primary:hover { box-shadow: 0 0 16px rgba(0, 229, 160, 0.4); }
+  .btn-ghost { background: transparent; color: #E8F0FE; border: 1px solid #2d3f5e; padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+  .btn-ghost:hover { background: rgba(255, 255, 255, 0.05); }
+  .btn-danger { background: rgba(255, 71, 87, 0.15); color: #FF4757; border: 1px solid rgba(255, 71, 87, 0.3); padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 11px; }
+
+  .card { background: rgba(255, 255, 255, 0.03); border: 1px solid #1E2D45; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .empty { text-align: center; padding: 60px 20px; color: #4a5568; }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  .child-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+  .child-row:last-child { border-bottom: none; }
+  .child-avatar { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #00E5A0, #00C885); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #0A0E1A; }
+  .child-info { flex: 1; }
+  .child-name { font-size: 14px; font-weight: 600; }
+  .child-email { font-size: 11px; color: #4a5568; margin-top: 2px; }
+  .status-badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; letter-spacing: 0.5px; }
+  .status-active { background: rgba(0, 229, 160, 0.15); color: #00E5A0; }
+  .status-pending { background: rgba(255, 190, 60, 0.15); color: #FFBE3C; }
+
+  /* Modal */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+  .modal-backdrop.show { display: flex; }
+  .modal { background: #131B2C; border: 1px solid #1E2D45; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .modal-desc { font-size: 13px; color: #4a5568; margin-bottom: 20px; }
+  .form-label { display: block; font-size: 12px; color: #4a5568; margin-bottom: 6px; margin-top: 14px; font-weight: 600; }
+  .form-input { width: 100%; background: #0F1623; border: 1px solid #1E2D45; border-radius: 9px; padding: 11px 14px; color: #E8F0FE; font-size: 14px; }
+  .form-input:focus { outline: none; border-color: #00E5A0; box-shadow: 0 0 0 2px rgba(0, 229, 160, 0.1); }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-top: 12px; }
+  .msg-error { background: rgba(255, 71, 87, 0.1); color: #FF4757; border: 1px solid rgba(255, 71, 87, 0.2); }
+  .msg-success { background: rgba(0, 229, 160, 0.1); color: #00E5A0; border: 1px solid rgba(0, 229, 160, 0.2); }
+  .msg-info { background: rgba(60, 156, 255, 0.1); color: #3C9CFF; border: 1px solid rgba(60, 156, 255, 0.2); }
+
+  .code-input { width: 100%; text-align: center; font-size: 26px; font-weight: 700; letter-spacing: 12px; padding: 16px; font-family: monospace; }
+
+  /* Notifications section */
+  .notif-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .notif-tab { padding: 8px 14px; background: rgba(255, 255, 255, 0.04); border-radius: 8px; cursor: pointer; font-size: 12px; color: #E8F0FE; }
+  .notif-tab.active { background: rgba(0, 229, 160, 0.15); color: #00E5A0; }
+  .notif-item { display: flex; gap: 12px; padding: 12px 14px; border-radius: 9px; background: rgba(255, 255, 255, 0.03); margin-bottom: 8px; border-left: 3px solid transparent; }
+  .notif-item.unread { border-left-color: #FF4757; background: rgba(255, 71, 87, 0.05); }
+  .notif-icon { font-size: 20px; }
+  .notif-body { flex: 1; }
+  .notif-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .notif-meta { font-size: 11px; color: #4a5568; }
+  .notif-query { font-size: 11px; color: #FF4757; font-family: monospace; margin-top: 4px; word-break: break-all; }
+
+  .no-parent-msg { text-align: center; padding: 80px 20px; }
+  .no-parent-msg .lock { font-size: 60px; margin-bottom: 16px; opacity: 0.4; }
+
+  /* Activity Intelligence — child activity modal */
+  .btn-soft { background: rgba(0,229,160,0.12); color:#00E5A0; border:1px solid rgba(0,229,160,0.25); padding:6px 12px; border-radius:7px; cursor:pointer; font-size:11px; margin-right:8px; }
+  .btn-soft:hover { background: rgba(0,229,160,0.2); }
+  .modal-lg { max-width: 640px; max-height: 88vh; overflow-y: auto; }
+  .act-donut { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+  .act-donut svg { transform: rotate(-90deg); }
+  .act-donut .dc { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .act-dv { font-size:23px; font-weight:800; color:#00E5A0; }
+  .act-dl { font-size:9px; color:#4a5568; letter-spacing:1px; margin-top:2px; }
+  .act-hero { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:12px 0; }
+  .act-legend { flex:1; min-width:170px; display:flex; flex-direction:column; gap:8px; }
+  .act-leg { display:flex; align-items:center; gap:8px; font-size:12.5px; }
+  .act-leg .sw { width:11px; height:11px; border-radius:3px; flex-shrink:0; }
+  .act-leg .ln { color:#E8F0FE; flex:1; }
+  .act-leg .lv { color:#4a5568; font-weight:700; }
+  .act-sec-title { font-size:12px; color:#4a5568; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin:18px 0 10px; }
+  .act-brk { display:flex; align-items:center; gap:10px; margin:8px 0; }
+  .act-brk-ic { width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .act-brk-main { flex:1; min-width:0; }
+  .act-brk-top { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; }
+  .act-brk-name { color:#E8F0FE; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .act-brk-val { color:#4a5568; font-weight:700; flex-shrink:0; margin-left:8px; }
+  .act-brk-track { height:6px; background:rgba(255,255,255,0.06); border-radius:6px; overflow:hidden; }
+  .act-brk-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,#00E5A0,#06B6D4); }
+  .act-metrics { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .act-metric { flex:1; min-width:88px; background:rgba(255,255,255,0.03); border:1px solid #1E2D45; border-radius:10px; padding:12px; text-align:center; }
+  .act-metric .mv { font-size:20px; font-weight:800; }
+  .act-metric .ml { font-size:10px; color:#4a5568; margin-top:3px; }
+  .act-trend { font-size:11px; padding:3px 9px; border-radius:8px; font-weight:700; }
+  .act-trend.up { color:#00E5A0; background:rgba(0,229,160,0.14); }
+  .act-trend.down { color:#FF6B7A; background:rgba(255,71,87,0.12); }
+  .act-trend.flat { color:#7C8AA5; background:rgba(124,138,165,0.14); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <div class="title">👨‍👧 Farzandlarni boshqarish</div>
+      <div class="subtitle">Farzandlaringizni NIEX Browser'ga ulang va ularning xavfsizligini kuzatib boring</div>
+    </div>
+    <div>
+      <button id="add-child-btn" class="btn-primary">+ Farzand qo'shish</button>
+    </div>
+  </div>
+
+  <!-- Rol tekshiruvi — parent bo'lmasa xabar -->
+  <div id="not-parent" style="display:none" class="no-parent-msg">
+    <div class="lock">🔒</div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px">Bu bo'lim faqat ota-onalarga</div>
+    <div style="font-size:12px;color:#4a5568;max-width:420px;margin:auto">
+      Farzandlarni boshqarish uchun profil sozlamalarida rolingizni "Parent" (Ota-ona) qilib belgilang.
+    </div>
+  </div>
+
+  <div id="parent-content" style="display:none">
+    <!-- Farzandlar ro'yxati -->
+    <div class="card">
+      <div style="font-size:13px;color:#4a5568;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600">Farzandlar</div>
+      <div id="children-list"></div>
+      <div id="children-empty" class="empty" style="display:none">
+        <div class="empty-icon">👶</div>
+        <div style="font-size:14px;margin-bottom:6px">Hech qanday farzand ulanmagan</div>
+        <div style="font-size:12px">"Farzand qo'shish" tugmasini bosing</div>
+      </div>
+    </div>
+
+    <!-- Notification Center -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:13px;color:#4a5568;text-transform:uppercase;letter-spacing:1px;font-weight:600">Bildirishnomalar</div>
+        <div id="notif-badge" style="display:none;background:#FF4757;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">0 yangi</div>
+      </div>
+      <div class="notif-tabs">
+        <div class="notif-tab active" data-filter="all">Barchasi</div>
+        <div class="notif-tab" data-filter="unread">O'qilmagan</div>
+      </div>
+      <div id="notif-list"></div>
+      <div id="notif-empty" class="empty" style="display:none">
+        <div class="empty-icon">🔕</div>
+        <div style="font-size:12px">Hozircha bildirishnoma yo'q</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CHILD MODAL -->
+<div class="modal-backdrop" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">Farzand qo'shish</div>
+    <div class="modal-desc">Farzandingiz oldindan NIEX Browser'ga ro'yxatdan o'tgan bo'lishi kerak.</div>
+
+    <div id="step-email">
+      <label class="form-label" for="child-email">Farzand emaili</label>
+      <input id="child-email" class="form-input" type="email" placeholder="example@gmail.com" autocomplete="off" />
+      <div id="email-msg"></div>
+      <div class="form-actions">
+        <button class="btn-ghost" onclick="closeAddModal()">Bekor qilish</button>
+        <button class="btn-primary" id="send-code-btn">Kod yuborish</button>
+      </div>
+    </div>
+
+    <div id="step-code" style="display:none">
+      <div style="text-align:center;padding:16px;background:rgba(0,229,160,0.06);border-radius:10px;margin-bottom:16px">
+        <div style="font-size:12px;color:#4a5568">Kod yuborildi:</div>
+        <div id="code-sent-to" style="font-size:14px;font-weight:600;margin-top:4px"></div>
+      </div>
+      <label class="form-label">6 xonali kodni kiriting</label>
+      <input id="verify-code" class="form-input code-input" type="text" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+      <div id="code-msg"></div>
+      <div class="form-actions">
+        <button class="btn-ghost" onclick="backToEmail()">← Orqaga</button>
+        <button class="btn-primary" id="verify-code-btn">Tasdiqlash</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHILD ACTIVITY MODAL (Activity Intelligence) -->
+<div class="modal-backdrop" id="activity-modal">
+  <div class="modal modal-lg">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="modal-title" id="act-child-name">Faoliyat</div>
+      <button class="btn-ghost" style="padding:6px 12px" onclick="closeActivityModal()">✕</button>
+    </div>
+    <div class="modal-desc">Faqat umumlashtirilgan statistika — aniq sahifalar yoki tarix ko'rsatilmaydi (maxfiylik).</div>
+    <div id="activity-body"><div class="empty" style="padding:40px 0">Yuklanmoqda…</div></div>
+  </div>
+</div>
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase config yuklash — main.js dan .env orqali keladi -->
+<script>
+  // Firebase config'ni preload orqali olamiz (main.js .env dan yuklaydi)
+  if (window._ipc) {
+    // TODO: firebase config qanday keladi tekshirish. Hozircha inline hardcode fallback
+  }
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_9PqsXO10JLNejXgUgOhu8oYpX3G_ros",
+    authDomain: "safe-brauzer-cf748.firebaseapp.com",
+    projectId: "safe-brauzer-cf748",
+    storageBucket: "safe-brauzer-cf748.firebasestorage.app",
+    messagingSenderId: "781225555534",
+    appId: "1:781225555534:web:2cf9a864e1d7238efb351f",
+  };
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  } catch (e) { console.error('Firebase init:', e); }
+</script>
+
+<script src="../onboarding/profile-service.js"></script>
+<!-- Supabase service (Firebase parent-control-service.js o'rniga).
+     Interfeys bir xil — parent-control.js o'zgarmaydi. -->
+<script src="./parent-control-supabase.js"></script>
+<script src="./parent-control.js"></script>
+</body>
+</html>

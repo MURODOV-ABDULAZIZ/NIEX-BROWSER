@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIEX Focus</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   NIEX Focus — Exit Intervention (chiqish oynasi).
+   Falsafa: DIGITAL QAMOQ EMAS. Foydalanuvchiga ongli qaror qabul qilishda
+   yordam beradi. Yakuniy qaror — foydalanuvchida. Ayblash/bosim YO'Q.
+   ═══════════════════════════════════════════════════════════════ */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root{
+  --bg:#0B1220; --panel:rgba(255,255,255,0.04); --text:#E8F0FE; --muted:#94a6c4;
+  --border:rgba(255,255,255,0.10); --accent:#00E5A0; --accent2:#00C885; --danger:#FF6B7A; --warn:#FFB86B;
+}
+@media (prefers-color-scheme: light){
+  :root{ --bg:#F4F7FB; --panel:rgba(15,23,42,0.03); --text:#1F2937; --muted:#52606D; --border:rgba(15,23,42,0.10); --accent:#0F9F79; --accent2:#0C8A68; }
+}
+html,body{ height:100%; }
+body{
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0,229,160,0.12), transparent 30%),
+    linear-gradient(180deg, var(--bg), #070c16);
+  color:var(--text); font-family:-apple-system,'Segoe UI',system-ui,sans-serif;
+  display:flex; flex-direction:column; height:100vh; overflow:hidden; user-select:none;
+}
+@media (prefers-color-scheme: light){ body{ background:linear-gradient(180deg,#F4F7FB,#E7EEF8); } }
+.bar{ -webkit-app-region:drag; height:38px; display:flex; align-items:center; padding:0 8px 0 14px; flex-shrink:0; }
+.bar .b-title{ font-size:12px; font-weight:700; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+.bar .sp{ flex:1; }
+.bar .x{ -webkit-app-region:no-drag; width:26px; height:26px; border-radius:7px; display:grid; place-items:center; color:var(--muted); cursor:pointer; font-size:15px; }
+.bar .x:hover{ background:rgba(255,107,122,.14); color:var(--danger); }
+.body{ flex:1; overflow-y:auto; padding:6px 22px 22px; }
+
+.headline{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.headline .mark{ width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#06B6D4);color:#04120c;font-weight:900;font-size:20px;flex-shrink:0; }
+.headline .h1{ font-size:16px; font-weight:800; }
+.headline .h2{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+.goal-card{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:16px; }
+.goal-card .gl{ font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); font-weight:700; }
+.goal-card .gv{ font-size:14.5px; font-weight:700; margin-top:4px; line-height:1.3; }
+.goal-card .gt{ font-size:12px; color:var(--muted); margin-top:3px; }
+.away{ font-size:12.5px; color:var(--warn); margin-bottom:14px; }
+
+.q{ font-size:14px; font-weight:700; margin-bottom:11px; }
+.chips{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:14px; }
+.chip{ background:var(--panel); border:1px solid var(--border); color:var(--text); border-radius:11px; padding:11px 12px; font-size:13px; font-weight:600; cursor:pointer; transition:.14s; text-align:left; font-family:inherit; display:flex; align-items:center; gap:8px; }
+.chip:hover{ border-color:var(--accent); }
+.chip.sel{ background:rgba(0,229,160,.14); border-color:var(--accent); color:var(--accent); }
+.chip.urgent{ border-color:rgba(255,107,122,.35); }
+.chip.urgent:hover, .chip.urgent.sel{ background:rgba(255,107,122,.14); border-color:var(--danger); color:var(--danger); }
+
+.ta{ width:100%; background:var(--panel); border:1px solid var(--border); border-radius:11px; color:var(--text); padding:11px 12px; font-size:13px; font-family:inherit; resize:none; min-height:56px; outline:none; margin-bottom:14px; }
+.ta:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,229,160,.12); }
+.ta::placeholder{ color:var(--muted); opacity:.7; }
+
+.btn{ width:100%; border:none; border-radius:12px; padding:13px 16px; font-size:14px; font-weight:800; cursor:pointer; font-family:inherit; transition:.14s; display:flex; align-items:center; justify-content:center; gap:8px; }
+.btn.primary{ background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04120c; }
+.btn.primary:hover{ filter:brightness(1.06); }
+.btn.primary[disabled]{ opacity:.45; cursor:not-allowed; filter:none; }
+.btn.ghost{ background:var(--panel); color:var(--text); border:1px solid var(--border); }
+.btn.ghost:hover{ border-color:var(--accent); color:var(--accent); }
+.btn.leave{ background:rgba(255,107,122,.12); color:var(--danger); border:1px solid rgba(255,107,122,.3); }
+.btn.leave:hover{ background:rgba(255,107,122,.2); }
+.btn + .btn{ margin-top:9px; }
+.escape{ text-align:center; margin-top:14px; }
+.escape a{ color:var(--muted); font-size:12px; cursor:pointer; text-decoration:none; border-bottom:1px dashed var(--border); padding-bottom:1px; }
+.escape a:hover{ color:var(--danger); }
+
+.rec{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px; line-height:1.55; font-size:14px; }
+.rec .ri{ font-size:22px; margin-bottom:8px; }
+.muted-note{ font-size:11.5px; color:var(--muted); text-align:center; margin-top:12px; line-height:1.5; }
+.fade{ animation:f .2s ease; } @keyframes f{ from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="b-title">NIEX Focus</div>
+    <div class="sp"></div>
+    <div class="x" id="close" title="Yopish">✕</div>
+  </div>
+  <div class="body" id="view"><div class="muted-note">Yuklanmoqda…</div></div>
+
+<script>
+'use strict';
+const IV = window.safenet_focus_intervention;
+const view = document.getElementById('view');
+let ctx = null;         // { eventId, goal, task, awayMinutes, remainingMinutes }
+let selected = null;    // tanlangan sabab kategoriyasi
+
+const REASONS = [
+  ['important_task','💼','Muhim ish'],
+  ['communication','💬','Aloqa / xabar'],
+  ['quick_action','⚡','Tez ish'],
+  ['research','🔎','Izlanish'],
+  ['break','☕','Tanaffus'],
+  ['just_checking','👀','Shunchaki'],
+  ['other','•','Boshqa'],
+];
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderReason(){
+  const away = ctx.awayMinutes>=1 ? `~${ctx.awayMinutes} daqiqa` : 'bir oz';
+  view.innerHTML = `
+    <div class="headline fade">
+      <div class="mark">N</div>
+      <div><div class="h1">Xush kelibsiz</div><div class="h2">Focus sessiyangiz hali faol</div></div>
+    </div>
+    <div class="goal-card fade">
+      <div class="gl">Maqsad</div>
+      <div class="gv">${esc(ctx.goal||'Focus')}</div>
+      ${ctx.task?`<div class="gt">${esc(ctx.task)}</div>`:''}
+    </div>
+    <div class="away fade">🕒 Siz ${away} NIEX'dan tashqarida edingiz.</div>
+    <div class="q fade">O'sha chiqish nima uchun edi?</div>
+    <div class="chips fade">
+      <button class="chip urgent" data-r="emergency">🚨 Shoshilinch</button>
+      ${REASONS.map(r=>`<button class="chip" data-r="${r[0]}">${r[1]} ${esc(r[2])}</button>`).join('')}
+    </div>
+    <textarea class="ta fade" id="txt" maxlength="500" placeholder="Qisqacha izohlang (ixtiyoriy)…"></textarea>
+    <button class="btn primary fade" id="go" disabled>Davom</button>
+    <div class="escape fade"><a id="esc">Shoshilinch — darhol chiqaman</a></div>
+  `;
+  view.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const r = c.dataset.r;
+    if(r==='emergency'){ resolveLeave('emergency'); return; }   // shoshilinch — ushlab turmaymiz
+    selected = r;
+    view.querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel', x===c));
+    document.getElementById('go').disabled = false;
+  });
+  document.getElementById('go').onclick = submitReason;
+  document.getElementById('esc').onclick = () => resolveLeave('emergency');
+}
+
+async function submitReason(){
+  const btn = document.getElementById('go');
+  btn.disabled = true; btn.textContent = 'Tahlil qilinmoqda…';
+  const freeText = (document.getElementById('txt').value||'').trim();
+  let d;
+  try {
+    d = await IV.decide({ eventId: ctx.eventId, reasonCategory: selected, freeText });
+  } catch(e) { d = null; }
+  // AI/mantiq ishlamasa ham — foydalanuvchi baribir qaror qiladi (fallback).
+  if(!d || !d.decision){
+    d = { decision:'stay_focused', reason:"Sessiyangiz hali faol. Davom etasizmi yoki chiqasizmi?", suggested_action:'continue_focus', category:'unknown' };
+  }
+  renderDecision(d, freeText);
+}
+
+function renderDecision(d, freeText){
+  const leavePrimary = d.suggested_action === 'leave';
+  const icon = leavePrimary ? '✅' : (d.suggested_action==='schedule' ? '🗓️' : '🎯');
+  const stayBtn = `<button class="btn ${leavePrimary?'ghost':'primary'}" id="stay">🎯 Focusda davom etaman</button>`;
+  const leaveBtn = `<button class="btn ${leavePrimary?'primary':'leave'}" id="leave">${leavePrimary?'Chiqaveraman':'Baribir chiqaman'}</button>`;
+  view.innerHTML = `
+    <div class="headline fade">
+      <div class="mark">N</div>
+      <div><div class="h1">${esc(ctx.goal||'Focus')}</div><div class="h2">${ctx.remainingMinutes>0?('~'+ctx.remainingMinutes+' daqiqa qoldi'):'Sessiya faol'}</div></div>
+    </div>
+    <div class="rec fade"><div class="ri">${icon}</div>${esc(d.reason)}</div>
+    <div class="fade">
+      ${ leavePrimary ? leaveBtn + stayBtn : stayBtn + leaveBtn }
+    </div>
+    <div class="muted-note fade">Qaror har doim sizniki. NIEX shunchaki yordam beradi.</div>
+  `;
+  const stay = document.getElementById('stay');
+  const leave = document.getElementById('leave');
+  if(stay) stay.onclick = () => resolve('stayed', d, freeText);
+  if(leave) leave.onclick = () => resolve('left', d, freeText);
+}
+
+function resolve(userDecision, d, freeText){
+  try {
+    IV.resolve({
+      eventId: ctx ? ctx.eventId : null,
+      userDecision,
+      reasonCategory: selected || 'unknown',
+      freeText: freeText || '',
+      aiDecision: d ? d.decision : null,
+      category: d ? d.category : null,
+    });
+  } catch(e) {}
+}
+function resolveLeave(reason){
+  try { IV.resolve({ eventId: ctx?ctx.eventId:null, userDecision:'left', reasonCategory:reason, aiDecision:'allow', category:'urgent' }); } catch(e){}
+}
+
+document.getElementById('close').onclick = () => resolve('dismissed', null, '');
+
+if(IV && IV.onContext){
+  IV.onContext(c => { ctx = c || {}; selected = null; renderReason(); });
+} else {
+  view.innerHTML = '<div class="muted-note">Bu oyna NIEX ichida ishlaydi.</div>';
+}
+</script>
+</body>
+</html>
